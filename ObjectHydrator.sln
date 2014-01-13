@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObjectHydrator", "ObjectHydrator\ObjectHydrator.csproj", "{2264CEF6-757A-464E-81CA-C3D9C59E23AC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlObjectHydrator", "ObjectHydrator\SqlObjectHydrator.csproj", "{2264CEF6-757A-464E-81CA-C3D9C59E23AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObjectHydrator.Tests", "ObjectHydrator.Tests\ObjectHydrator.Tests.csproj", "{09D0B156-9A5F-4F0B-B52F-280350119000}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlObjectHydrator.Tests", "ObjectHydrator.Tests\SqlObjectHydrator.Tests.csproj", "{09D0B156-9A5F-4F0B-B52F-280350119000}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

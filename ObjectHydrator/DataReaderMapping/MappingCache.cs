@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
-using ObjectHydrator.Configuration;
+using SqlObjectHydrator.Configuration;
 
-namespace ObjectHydrator.DataReaderMapping
+namespace SqlObjectHydrator.DataReaderMapping
 {
     internal class MappingCache
     {

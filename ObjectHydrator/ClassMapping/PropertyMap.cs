@@ -1,6 +1,6 @@
 using System;
 
-namespace ObjectHydrator.ClassMapping
+namespace SqlObjectHydrator.ClassMapping
 {
     internal class PropertyMap
     {

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Data;
-using ObjectHydrator.Configuration;
+using SqlObjectHydrator.Configuration;
 
-namespace ObjectHydrator
+namespace SqlObjectHydrator
 {
     public interface IObjectHydrator
     {

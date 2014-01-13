@@ -7,8 +7,8 @@
     <ProjectGuid>{2264CEF6-757A-464E-81CA-C3D9C59E23AC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ObjectHydrator</RootNamespace>
-    <AssemblyName>ObjectHydrator</AssemblyName>
+    <RootNamespace>SqlObjectHydrator</RootNamespace>
+    <AssemblyName>SqlObjectHydrator</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ObjectHydrator.Tests.TestData
+namespace SqlObjectHydrator.Tests.TestData
 {
     public class ClassWithAllTypes
     {

@@ -2,10 +2,10 @@
 using System.Data;
 using System.Linq.Expressions;
 using NUnit.Framework;
-using ObjectHydrator.Configuration;
-using ObjectHydrator.Tests.TestData;
+using SqlObjectHydrator.Configuration;
+using SqlObjectHydrator.Tests.TestData;
 
-namespace ObjectHydrator.Tests.Configuration
+namespace SqlObjectHydrator.Tests.Configuration
 {
     [TestFixture]
     public class ObjectHydratorConfigurationTests
@@ -13,7 +13,7 @@ namespace ObjectHydrator.Tests.Configuration
         [Test]
         public void Mapping_WhenCalled_AddsMappingToMappingActions()
         {
-            Expression<Func<User, String>> mappingColumnName = x => x.FullName;
+            Expression<Func<User, string>> mappingColumnName = x => x.FullName;
             Expression<Func<IDataRecord, String>> mappingValue = x => String.Format( "{0} {1}", x[ "FirstName" ], x[ "LastName" ] );
 
             var hydratorConfiguration = new ObjectHydratorConfiguration<User>();

@@ -4,7 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace ObjectHydrator.Configuration
+namespace SqlObjectHydrator.Configuration
 {
     internal class ConfigurationValidator
     {

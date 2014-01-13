@@ -3,10 +3,10 @@ using System.Data;
 using System.Linq;
 using Moq;
 using NUnit.Framework;
-using ObjectHydrator.Configuration;
-using ObjectHydrator.Tests.TestData;
+using SqlObjectHydrator.Configuration;
+using SqlObjectHydrator.Tests.TestData;
 
-namespace ObjectHydrator.Tests.Configuration
+namespace SqlObjectHydrator.Tests.Configuration
 {
     [TestFixture]
     public class ConfigurationValidatorTests

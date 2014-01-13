@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using Moq;
 using NUnit.Framework;
-using ObjectHydrator.Configuration;
-using ObjectHydrator.Tests.TestData;
+using SqlObjectHydrator.Tests.TestData;
 
-namespace ObjectHydrator.Tests
+namespace SqlObjectHydrator.Tests
 {
     [TestFixture]
     public class ObjectHydratorTests
@@ -23,19 +21,19 @@ namespace ObjectHydrator.Tests
             Assert.IsInstanceOf<List<User>>( result );
         }
 
-        [Test]
-        public void DataReaderToList_WhenCalledWithInvalidConfiguration_ThrowsException()
-        {
-            var dataReader = new Mock<IDataReader>();
-            dataReader.SetupGet( x => x[ 0 ] ).Returns( "Hello World" );
+        //[Test]
+        //public void DataReaderToList_WhenCalledWithInvalidConfiguration_ThrowsException()
+        //{
+        //    var dataReader = new Mock<IDataReader>();
+        //    dataReader.SetupGet( x => x[ 0 ] ).Returns( "Hello World" );
 
-            var configuration = new ObjectHydratorConfiguration<User>()
-                .Mapping( x => x.Id, x => x[ 0 ] );
+        //    var configuration = new ObjectHydratorConfiguration<User>()
+        //        .Mapping( x => x.Id, x => x[ 0 ] );
 
-            var objectHydrator = new ObjectHydrator();
+        //    var objectHydrator = new ObjectHydrator();
 
-            Assert.Throws<Exception>( () => objectHydrator.DataReaderToList( dataReader.Object, configuration ) );
-        }
+        //    Assert.Throws<Exception>( () => objectHydrator.DataReaderToList( dataReader.Object, configuration ) );
+        //}
 
 
     }

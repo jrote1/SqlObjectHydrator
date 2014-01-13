@@ -4,11 +4,11 @@ using System.Data;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
-using ObjectHydrator.Configuration;
-using ObjectHydrator.DataReaderMapping;
-using ObjectHydrator.Tests.TestData;
+using SqlObjectHydrator.Configuration;
+using SqlObjectHydrator.DataReaderMapping;
+using SqlObjectHydrator.Tests.TestData;
 
-namespace ObjectHydrator.Tests.DataReaderMapping
+namespace SqlObjectHydrator.Tests.DataReaderMapping
 {
     [TestFixture]
     public class MappingCacheTests

@@ -2,11 +2,11 @@
 using System.Linq;
 using Moq;
 using NUnit.Framework;
-using ObjectHydrator.ClassMapping;
-using ObjectHydrator.Configuration;
-using ObjectHydrator.Tests.TestData;
+using SqlObjectHydrator.ClassMapping;
+using SqlObjectHydrator.Configuration;
+using SqlObjectHydrator.Tests.TestData;
 
-namespace ObjectHydrator.Tests.ClassMappingTests
+namespace SqlObjectHydrator.Tests.ClassMappingTests
 {
     [TestFixture]
     public class ClassMappingGeneratorTests

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 
-namespace ObjectHydrator.Configuration
+namespace SqlObjectHydrator.Configuration
 {
     internal static class ExpressionHelpers
     {

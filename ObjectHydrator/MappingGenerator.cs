@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 using System.Reflection.Emit;
-using ObjectHydrator.ClassMapping;
-using ObjectHydrator.Configuration;
+using SqlObjectHydrator.ClassMapping;
+using SqlObjectHydrator.Configuration;
 
-namespace ObjectHydrator
+namespace SqlObjectHydrator
 {
     internal class MappingGenerator
     {
@@ -30,6 +30,18 @@ namespace ObjectHydrator
             var tempRoot = emiter.DeclareLocal( typeof ( T ) );
             var mapParams = emiter.DeclareLocal( typeof ( object[] ) );
 
+            var compiledMaps = new LocalBuilder[ configuration.MappingsActions.Count ];
+            for ( int index = 0; index < configuration.MappingsActions.Count; index++ )
+            {
+                compiledMaps[ index ] = emiter.DeclareLocal( typeof ( Delegate ) );
+                emiter.Emit( OpCodes.Ldarg_1 );
+                emiter.Emit( OpCodes.Ldc_I4, index );
+                emiter.Emit( OpCodes.Callvirt, typeof ( List<LambdaExpression> ).GetProperty( "Item" ).GetGetMethod() );
+                emiter.Emit( OpCodes.Callvirt, typeof ( LambdaExpression ).GetMethod( "Compile", new Type[ 0 ] ) );
+                emiter.Emit( OpCodes.Stloc, compiledMaps[ index ] );
+            }
+
+
             emiter.Emit( OpCodes.Ldc_I4, 1 );
             emiter.Emit( OpCodes.Newarr, typeof ( object ) );
             emiter.Emit( OpCodes.Stloc, mapParams );
@@ -48,7 +60,7 @@ namespace ObjectHydrator
             emiter.Emit( OpCodes.Newobj, typeof ( T ).GetConstructor( new Type[ 0 ] ) );
             emiter.Emit( OpCodes.Stloc, tempRoot );
 
-            SetProperties<T>( classMap, emiter, mapParams, tempRoot );
+            SetProperties<T>( classMap, emiter, mapParams,compiledMaps, tempRoot );
 
             emiter.Emit( OpCodes.Ldloc, result );
             emiter.Emit( OpCodes.Ldloc, tempRoot );
@@ -65,7 +77,7 @@ namespace ObjectHydrator
             return (Func<IDataReader, List<LambdaExpression>, List<T>>)method.CreateDelegate( typeof ( Func<IDataReader, List<LambdaExpression>, List<T>> ) );
         }
 
-        private static void SetProperties<T>( ClassMap classMap, ILGenerator emiter, LocalBuilder mapParams, LocalBuilder localBuilder ) where T : new()
+        private static void SetProperties<T>( ClassMap classMap, ILGenerator emiter, LocalBuilder mapParams, LocalBuilder[] compiledMaps, LocalBuilder localBuilder ) where T : new()
         {
             foreach ( var property in classMap.Propertys )
             {
@@ -77,7 +89,7 @@ namespace ObjectHydrator
                     emiter.Emit( OpCodes.Ldloc, localBuilder );
                     emiter.Emit( OpCodes.Ldloc, local );
                     emiter.Emit( OpCodes.Callvirt, classMap.Type.GetProperty( property.Name ).GetSetMethod() );
-                    SetProperties<T>( (ClassMap)property, emiter, mapParams, local );
+                    SetProperties<T>( (ClassMap)property, emiter, mapParams,compiledMaps, local );
                 }
                 else
                 {
@@ -116,10 +128,9 @@ namespace ObjectHydrator
                     else
                     {
                         emiter.Emit( OpCodes.Ldloc, localBuilder );
-                        emiter.Emit( OpCodes.Ldarg_1 );
-                        emiter.Emit( OpCodes.Ldc_I4, property.ConfigurationMapId.Value );
-                        emiter.Emit( OpCodes.Callvirt, typeof ( List<LambdaExpression> ).GetProperty( "Item" ).GetGetMethod() );
-                        emiter.Emit( OpCodes.Callvirt, typeof ( LambdaExpression ).GetMethod( "Compile", new Type[ 0 ] ) );
+                        
+                        emiter.Emit( OpCodes.Ldloc,compiledMaps[property.ConfigurationMapId.Value] );
+                        
                         emiter.Emit( OpCodes.Ldloc, mapParams );
                         emiter.Emit( OpCodes.Callvirt, typeof ( Delegate ).GetMethod( "DynamicInvoke" ) );
                         if ( !property.Type.IsPrimitive )

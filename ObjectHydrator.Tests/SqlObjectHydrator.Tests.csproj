@@ -7,8 +7,8 @@
     <ProjectGuid>{09D0B156-9A5F-4F0B-B52F-280350119000}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ObjectHydrator.Tests</RootNamespace>
-    <AssemblyName>ObjectHydrator.Tests</AssemblyName>
+    <RootNamespace>SqlObjectHydrator.Tests</RootNamespace>
+    <AssemblyName>SqlObjectHydrator.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -58,9 +58,9 @@
     <Compile Include="TestData\User.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ObjectHydrator\ObjectHydrator.csproj">
+    <ProjectReference Include="..\ObjectHydrator\SqlObjectHydrator.csproj">
       <Project>{2264cef6-757a-464e-81ca-c3d9c59e23ac}</Project>
-      <Name>ObjectHydrator</Name>
+      <Name>SqlObjectHydrator</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

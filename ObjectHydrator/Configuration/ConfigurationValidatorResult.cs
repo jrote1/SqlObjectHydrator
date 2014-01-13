@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ObjectHydrator.Configuration
+namespace SqlObjectHydrator.Configuration
 {
     internal class ConfigurationValidatorResult
     {

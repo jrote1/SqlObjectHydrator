@@ -4,10 +4,10 @@ using System.Data;
 using System.Linq;
 using Moq;
 using NUnit.Framework;
-using ObjectHydrator.Configuration;
-using ObjectHydrator.Tests.TestData;
+using SqlObjectHydrator.Configuration;
+using SqlObjectHydrator.Tests.TestData;
 
-namespace ObjectHydrator.Tests
+namespace SqlObjectHydrator.Tests
 {
     [TestFixture]
     public class MappingGeneratorTests
