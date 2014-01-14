@@ -8,7 +8,7 @@ namespace SqlObjectHydrator.DataReaderMapping
 {
     internal class MappingCache
     {
-        private static readonly Dictionary<Int32, Object> InternalMappingCache;
+        internal static Dictionary<Int32, Object> InternalMappingCache;
 
         static MappingCache()
         {
@@ -35,7 +35,7 @@ namespace SqlObjectHydrator.DataReaderMapping
 
         private static Int32 GetKey<T>( IDataReader dataReader, ObjectHydratorConfiguration<T> configuration ) where T : new()
         {
-            return GetDataReaderHashCode( dataReader ) + configuration.GetHashCode();
+            return typeof(T).Name.GetHashCode() + GetDataReaderHashCode( dataReader ) + configuration.GetHashCode();
         }
 
         private static Int32 GetDataReaderHashCode( IDataReader dataReader )
