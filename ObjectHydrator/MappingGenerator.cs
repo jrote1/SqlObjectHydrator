@@ -22,62 +22,61 @@ namespace SqlObjectHydrator
 
             var emiter = method.GetILGenerator();
 
-
+            //Define While Labels
             var whileIf = emiter.DefineLabel();
             var whileStart = emiter.DefineLabel();
 
+            //Declare Variables
             var result = emiter.DeclareLocal( typeof ( List<T> ) );
             var tempRoot = emiter.DeclareLocal( typeof ( T ) );
-            var mapParams = emiter.DeclareLocal( typeof ( object[] ) );
 
+            //Create Array With Compiled Maps
             var compiledMaps = new LocalBuilder[ configuration.MappingsActions.Count ];
             for ( int index = 0; index < configuration.MappingsActions.Count; index++ )
             {
-                compiledMaps[ index ] = emiter.DeclareLocal( typeof ( Delegate ) );
+                compiledMaps[ index ] = emiter.DeclareLocal( configuration.MappingsActions[ index ].Value.Compile().GetType() );
                 emiter.Emit( OpCodes.Ldarg_1 );
                 emiter.Emit( OpCodes.Ldc_I4, index );
                 emiter.Emit( OpCodes.Callvirt, typeof ( List<LambdaExpression> ).GetProperty( "Item" ).GetGetMethod() );
                 emiter.Emit( OpCodes.Callvirt, typeof ( LambdaExpression ).GetMethod( "Compile", new Type[ 0 ] ) );
+                emiter.Emit( OpCodes.Castclass, configuration.MappingsActions[ index ].Value.Compile().GetType() );
                 emiter.Emit( OpCodes.Stloc, compiledMaps[ index ] );
             }
 
-
-            emiter.Emit( OpCodes.Ldc_I4, 1 );
-            emiter.Emit( OpCodes.Newarr, typeof ( object ) );
-            emiter.Emit( OpCodes.Stloc, mapParams );
-            emiter.Emit( OpCodes.Ldloc, mapParams );
-            emiter.Emit( OpCodes.Ldc_I4, 0 );
-            emiter.Emit( OpCodes.Ldarg_0 );
-            emiter.Emit( OpCodes.Castclass, typeof ( object ) );
-            emiter.Emit( OpCodes.Stelem, typeof ( object ) );
-
+            //Create Result Variable
             emiter.Emit( OpCodes.Newobj, typeof ( List<T> ).GetConstructor( new Type[ 0 ] ) );
             emiter.Emit( OpCodes.Stloc, result );
 
+            //Start While Loop
             emiter.Emit( OpCodes.Br, whileIf );
             emiter.MarkLabel( whileStart );
 
+            //Create Root Variable
             emiter.Emit( OpCodes.Newobj, typeof ( T ).GetConstructor( new Type[ 0 ] ) );
             emiter.Emit( OpCodes.Stloc, tempRoot );
 
-            SetProperties<T>( classMap, emiter, mapParams,compiledMaps, tempRoot );
+            //Processes All Properties
+            SetProperties<T>( classMap, emiter, compiledMaps, configuration, tempRoot );
 
+            //Add Root Variable To Result
             emiter.Emit( OpCodes.Ldloc, result );
             emiter.Emit( OpCodes.Ldloc, tempRoot );
             emiter.Emit( OpCodes.Callvirt, typeof ( List<T> ).GetMethod( "Add" ) );
 
+            //While If
             emiter.MarkLabel( whileIf );
             emiter.Emit( OpCodes.Ldarg_0 );
             emiter.Emit( OpCodes.Callvirt, typeof ( IDataReader ).GetMethod( "Read" ) );
-            emiter.Emit( OpCodes.Brtrue, whileStart );
+            emiter.Emit( OpCodes.Brtrue, whileStart ); //Continue While Loop
 
+            //Return Result
             emiter.Emit( OpCodes.Ldloc, result );
             emiter.Emit( OpCodes.Ret );
 
             return (Func<IDataReader, List<LambdaExpression>, List<T>>)method.CreateDelegate( typeof ( Func<IDataReader, List<LambdaExpression>, List<T>> ) );
         }
 
-        private static void SetProperties<T>( ClassMap classMap, ILGenerator emiter, LocalBuilder mapParams, LocalBuilder[] compiledMaps, LocalBuilder localBuilder ) where T : new()
+        private static void SetProperties<T>( ClassMap classMap, ILGenerator emiter, LocalBuilder[] compiledMaps, ObjectHydratorConfiguration<T> configuration, LocalBuilder localBuilder ) where T : new()
         {
             foreach ( var property in classMap.Propertys )
             {
@@ -89,7 +88,7 @@ namespace SqlObjectHydrator
                     emiter.Emit( OpCodes.Ldloc, localBuilder );
                     emiter.Emit( OpCodes.Ldloc, local );
                     emiter.Emit( OpCodes.Callvirt, classMap.Type.GetProperty( property.Name ).GetSetMethod() );
-                    SetProperties<T>( (ClassMap)property, emiter, mapParams,compiledMaps, local );
+                    SetProperties<T>( (ClassMap)property, emiter, compiledMaps, configuration, local );
                 }
                 else
                 {
@@ -128,18 +127,10 @@ namespace SqlObjectHydrator
                     else
                     {
                         emiter.Emit( OpCodes.Ldloc, localBuilder );
-                        
-                        emiter.Emit( OpCodes.Ldloc,compiledMaps[property.ConfigurationMapId.Value] );
-                        
-                        emiter.Emit( OpCodes.Ldloc, mapParams );
-                        emiter.Emit( OpCodes.Callvirt, typeof ( Delegate ).GetMethod( "DynamicInvoke" ) );
-                        if ( !property.Type.IsPrimitive )
-                            emiter.Emit( OpCodes.Castclass, property.Type );
-                        else
-                        {
-                            emiter.Emit( OpCodes.Unbox_Any, property.Type );
-                        }
-                        emiter.Emit( OpCodes.Callvirt, classMap.Type.GetProperty( property.Name ).GetSetMethod() );
+                        emiter.Emit( OpCodes.Ldloc, compiledMaps[ property.ConfigurationMapId.Value ] );
+                        emiter.Emit( OpCodes.Ldarg_0 );
+                        emiter.Emit( OpCodes.Callvirt, configuration.MappingsActions[ property.ConfigurationMapId.Value ].Value.Compile().GetType().GetMethod( "Invoke" ) );
+                        emiter.Emit(OpCodes.Callvirt, classMap.Type.GetProperty(property.Name).GetSetMethod());
                     }
                 }
             }

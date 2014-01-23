@@ -29,6 +29,7 @@ namespace SqlObjectHydrator.Tests
             var dataReader = new Mock<IDataReader>();
             var calls = 0;
             dataReader.Setup( x => x.Read() ).Callback( () => calls++ ).Returns( () => calls <= 2 );
+             
 
             var configuration = new ObjectHydratorConfiguration<User>();
             var mappingGenerator = new MappingGenerator();
@@ -226,6 +227,7 @@ namespace SqlObjectHydrator.Tests
             dataReader.Setup( x => x.GetName( 0 ) ).Returns( "Id" );
             dataReader.Setup( x => x.GetFieldType( 0 ) ).Returns( typeof ( int ) );
             dataReader.Setup( x => x.GetInt32( 0 ) ).Returns( 2 );
+            
 
             var configuration = new ObjectHydratorConfiguration<User>()
                 .Mapping( x => x.ContactInfo.ContactId.Id, x => x.GetInt32( 0 ) );
