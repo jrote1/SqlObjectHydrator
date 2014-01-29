@@ -162,7 +162,5 @@ namespace SqlObjectHydrator
                 return "GetInt64";
             return "GetString";
         }
-
-        private const string BaseCode = @"using System; using System.Collections.Generic; using System.Data; using ObjectHydrator.Configuration; public class Test {{ public static List<{0}> GetData<{0}>( IDataReader dataReader, ObjectHydratorConfiguration<{0}> configuration ) {{ {1} }} }}";
     }
 }
