@@ -52,7 +52,7 @@ namespace SqlObjectHydrator.Tests
 
             dataReader.Setup( x => x.GetName( 1 ) ).Returns( "FullName" );
             dataReader.Setup( x => x.GetFieldType( 1 ) ).Returns( typeof ( string ) );
-            dataReader.Setup( x => x.GetString( 1 ) ).Returns( () => "FullName" + calls );
+            dataReader.Setup( x => x.GetValue( 1 ) ).Returns( () => "FullName" + calls );
 
             var configuration = new ObjectHydratorConfiguration<User>();
             var mappingGenerator = new MappingGenerator();
@@ -120,7 +120,7 @@ namespace SqlObjectHydrator.Tests
 
             dataReader.Setup( x => x.GetName( 11 ) ).Returns( "AString" );
             dataReader.Setup( x => x.GetFieldType( 11 ) ).Returns( typeof ( String ) );
-            dataReader.Setup( x => x.GetString( 11 ) ).Returns( "The String" );
+            dataReader.Setup( x => x.GetValue( 11 ) ).Returns( "The String" );
 
             var configuration = new ObjectHydratorConfiguration<ClassWithAllTypes>();
             var mappingGenerator = new MappingGenerator();
@@ -293,7 +293,7 @@ namespace SqlObjectHydrator.Tests
 
             dataReader.Setup( x => x.GetName( 11 ) ).Returns( "AString" );
             dataReader.Setup( x => x.GetFieldType( 11 ) ).Returns( typeof ( String ) );
-            dataReader.Setup( x => x.GetString( 11 ) ).Returns( "The String" );
+            dataReader.Setup( x => x.GetValue( 11 ) ).Returns( "The String" );
 
             var configuration = new ObjectHydratorConfiguration<ClassWithAllTypes>();
             var mappingGenerator = new MappingGenerator();
@@ -312,6 +312,26 @@ namespace SqlObjectHydrator.Tests
             Assert.AreEqual( 7, list.AInt32 );
             Assert.AreEqual( 8, list.AInt64 );
             Assert.AreEqual( "The String", list.AString );
+        }
+
+        [Test]
+        public void GenerateMapping_WhenStringReturnsDBNull_ReturnsNull()
+        {
+            var dataReader = new Mock<IDataReader>();
+            var calls = 0;
+            dataReader.Setup(x => x.Read()).Callback(() => calls++).Returns(() => calls <= 1);
+            dataReader.SetupGet(x => x.FieldCount).Returns(2);
+
+            dataReader.Setup(x => x.GetName(0)).Returns("FullName");
+            dataReader.Setup(x => x.GetFieldType(0)).Returns(typeof(string));
+            dataReader.Setup(x => x.GetValue(0)).Returns(DBNull.Value);
+
+            var configuration = new ObjectHydratorConfiguration<User>();
+            var mappingGenerator = new MappingGenerator();
+
+            var list = mappingGenerator.GenerateMapping(dataReader.Object, configuration)(dataReader.Object, configuration.MappingsActions.Select(x => x.Value).ToList());
+
+            Assert.AreEqual(null, list[0].FullName);
         }
     }
 }

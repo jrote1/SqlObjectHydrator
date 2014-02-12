@@ -45,7 +45,7 @@ namespace SqlObjectHydrator.Tests
             dataReader.Setup( x => x.GetName( 1 ) ).Returns( "FullName" );
             dataReader.Setup( x => x.GetFieldType( 1 ) ).Returns( typeof ( string ) );
             dataReader.Setup( x => x.GetInt32( 0 ) ).Returns( () => rows );
-            dataReader.Setup( x => x.GetString( 1 ) ).Returns( () => "Name" + rows );
+            dataReader.Setup( x => x.GetValue( 1 ) ).Returns( () => "Name" + rows );
 
             dataReader.Setup( x => x.Read() ).Returns( () => ++rows <= 2 );
 
@@ -74,7 +74,7 @@ namespace SqlObjectHydrator.Tests
             dataReader.Setup( x => x.GetName( 1 ) ).Returns( "FullName" );
             dataReader.Setup( x => x.GetFieldType( 1 ) ).Returns( typeof ( string ) );
             dataReader.Setup( x => x.GetInt32( 0 ) ).Returns( () => 1 );
-            dataReader.Setup( x => x.GetString( 1 ) ).Returns( () => "Name1" );
+            dataReader.Setup( x => x.GetValue( 1 ) ).Returns( () => "Name1" );
 
 
             var objectHydrator = new ObjectHydrator();
