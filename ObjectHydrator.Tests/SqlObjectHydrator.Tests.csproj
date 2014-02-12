@@ -47,7 +47,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClassMappingTests\ClassMappingGeneratorTests.cs" />
-    <Compile Include="Configuration\ConfigurationValidatorTests.cs" />
     <Compile Include="DataReaderMapping\MappingCacheTests.cs" />
     <Compile Include="MappingGeneratorTests.cs" />
     <Compile Include="Configuration\ObjectHydratorConfigurationTests.cs" />

@@ -238,5 +238,80 @@ namespace SqlObjectHydrator.Tests
 
             Assert.AreEqual( 2, list[ 0 ].ContactInfo.ContactId.Id );
         }
+
+		[Test]
+        public void GenerateMapping_WhenClassContainsAllTypesAndAllReturnedFromDataReader_FuncReturnsObjectWithAllValuesSet()
+        {
+            var dataReader = new Mock<IDataReader>();
+            var calls = 0;
+            dataReader.Setup( x => x.Read() ).Callback( () => calls++ ).Returns( () => calls <= 1 );
+            dataReader.SetupGet( x => x.FieldCount ).Returns( 12 );
+
+            dataReader.Setup( x => x.GetName( 0 ) ).Returns( "ABoolean" );
+            dataReader.Setup( x => x.GetFieldType( 0 ) ).Returns( typeof ( Boolean ) );
+            dataReader.Setup( x => x.GetBoolean( 0 ) ).Returns( true );
+
+            dataReader.Setup( x => x.GetName( 1 ) ).Returns( "AByte" );
+            dataReader.Setup( x => x.GetFieldType( 1 ) ).Returns( typeof ( Byte ) );
+            dataReader.Setup( x => x.GetByte( 1 ) ).Returns( 2 );
+
+            dataReader.Setup( x => x.GetName( 2 ) ).Returns( "AChar" );
+            dataReader.Setup( x => x.GetFieldType( 2 ) ).Returns( typeof ( Char ) );
+            dataReader.Setup( x => x.GetChar( 2 ) ).Returns( ' ' );
+
+            dataReader.Setup( x => x.GetName( 3 ) ).Returns( "ADateTime" );
+            dataReader.Setup( x => x.GetFieldType( 3 ) ).Returns( typeof ( DateTime ) );
+            dataReader.Setup( x => x.GetDateTime( 3 ) ).Returns( new DateTime( 2012, 12, 12 ) );
+
+            dataReader.Setup( x => x.GetName( 4 ) ).Returns( "ADecimal" );
+            dataReader.Setup( x => x.GetFieldType( 4 ) ).Returns( typeof ( Decimal ) );
+            dataReader.Setup( x => x.GetDecimal( 4 ) ).Returns( 3 );
+
+            dataReader.Setup( x => x.GetName( 5 ) ).Returns( "ADouble" );
+            dataReader.Setup( x => x.GetFieldType( 5 ) ).Returns( typeof ( Double ) );
+            dataReader.Setup( x => x.GetDouble( 5 ) ).Returns( 4 );
+
+            dataReader.Setup( x => x.GetName( 6 ) ).Returns( "ASingle" );
+            dataReader.Setup( x => x.GetFieldType( 6 ) ).Returns( typeof ( Single ) );
+            dataReader.Setup( x => x.GetFloat( 6 ) ).Returns( 5 );
+
+            dataReader.Setup( x => x.GetName( 7 ) ).Returns( "AGuid" );
+            dataReader.Setup( x => x.GetFieldType( 7 ) ).Returns( typeof ( Guid ) );
+            dataReader.Setup( x => x.GetGuid( 7 ) ).Returns( new Guid( "f993fbdd-0b59-46c0-9be2-49e1f52eb52c" ) );
+
+            dataReader.Setup( x => x.GetName( 8 ) ).Returns( "AInt16" );
+            dataReader.Setup( x => x.GetFieldType( 8 ) ).Returns( typeof ( Int16 ) );
+            dataReader.Setup( x => x.GetInt16( 8 ) ).Returns( 6 );
+
+            dataReader.Setup( x => x.GetName( 9 ) ).Returns( "AInt32" );
+            dataReader.Setup( x => x.GetFieldType( 9 ) ).Returns( typeof ( Int32 ) );
+            dataReader.Setup( x => x.GetInt32( 9 ) ).Returns( 7 );
+
+            dataReader.Setup( x => x.GetName( 10 ) ).Returns( "AInt64" );
+            dataReader.Setup( x => x.GetFieldType( 10 ) ).Returns( typeof ( Int64 ) );
+            dataReader.Setup( x => x.GetInt64( 10 ) ).Returns( 8 );
+
+            dataReader.Setup( x => x.GetName( 11 ) ).Returns( "AString" );
+            dataReader.Setup( x => x.GetFieldType( 11 ) ).Returns( typeof ( String ) );
+            dataReader.Setup( x => x.GetString( 11 ) ).Returns( "The String" );
+
+            var configuration = new ObjectHydratorConfiguration<ClassWithAllTypes>();
+            var mappingGenerator = new MappingGenerator();
+
+            var list = mappingGenerator.GenerateSingleObjectMapping( dataReader.Object, configuration )( dataReader.Object, configuration.MappingsActions.Select( x => x.Value ).ToList() );
+
+            Assert.AreEqual( true, list.ABoolean );
+            Assert.AreEqual( 2, list.AByte );
+            Assert.AreEqual( ' ', list.AChar );
+            Assert.AreEqual( new DateTime( 2012, 12, 12 ), list.ADateTime );
+            Assert.AreEqual( 3, list.ADecimal );
+            Assert.AreEqual( 4, list.ADouble );
+            Assert.AreEqual( 5, list.ASingle );
+            Assert.AreEqual( new Guid( "f993fbdd-0b59-46c0-9be2-49e1f52eb52c" ), list.AGuid );
+            Assert.AreEqual( 6, list.AInt16 );
+            Assert.AreEqual( 7, list.AInt32 );
+            Assert.AreEqual( 8, list.AInt64 );
+            Assert.AreEqual( "The String", list.AString );
+        }
     }
 }

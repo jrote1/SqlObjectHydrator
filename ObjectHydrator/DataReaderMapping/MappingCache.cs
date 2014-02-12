@@ -15,27 +15,27 @@ namespace SqlObjectHydrator.DataReaderMapping
             InternalMappingCache = new Dictionary<Int32, Object>();
         }
 
-        public bool ContainsMapping<T>( IDataReader dataReader, ObjectHydratorConfiguration<T> configuration ) where T : new()
+        public bool ContainsMapping<T,TReturn>( IDataReader dataReader, ObjectHydratorConfiguration<T> configuration ) where T : new()
         {
-            return InternalMappingCache.ContainsKey( GetKey( dataReader, configuration ) );
+            return InternalMappingCache.ContainsKey( GetKey<T,TReturn>( dataReader, configuration ) );
         }
 
-        public Func<IDataReader, List<LambdaExpression>, List<T>> GetCachedMapping<T>(IDataReader dataReader, ObjectHydratorConfiguration<T> configuration) where T : new()
+        public Func<IDataReader, List<LambdaExpression>, TReturn> GetCachedMapping<T,TReturn>(IDataReader dataReader, ObjectHydratorConfiguration<T> configuration) where T : new()
         {
-            var key = GetKey( dataReader, configuration );
+            var key = GetKey<T,TReturn>( dataReader, configuration );
             if ( InternalMappingCache.ContainsKey( key ) )
-                return (Func<IDataReader, List<LambdaExpression>, List<T>>)InternalMappingCache[key];
+                return (Func<IDataReader, List<LambdaExpression>, TReturn>)InternalMappingCache[key];
             return null;
         }
 
-        public void StoreMapping<T>(IDataReader dataReader, ObjectHydratorConfiguration<T> configuration, Func<IDataReader, List<LambdaExpression>, List<T>> mapping) where T : new()
+        public void StoreMapping<T,TReturn>(IDataReader dataReader, ObjectHydratorConfiguration<T> configuration, Func<IDataReader, List<LambdaExpression>, TReturn> mapping) where T : new()
         {
-            InternalMappingCache.Add( GetKey( dataReader, configuration ), mapping );
+            InternalMappingCache.Add( GetKey<T,TReturn>( dataReader, configuration ), mapping );
         }
 
-        private static Int32 GetKey<T>( IDataReader dataReader, ObjectHydratorConfiguration<T> configuration ) where T : new()
+        private static Int32 GetKey<T,TReturn>( IDataReader dataReader, ObjectHydratorConfiguration<T> configuration ) where T : new()
         {
-            return typeof(T).Name.GetHashCode() + GetDataReaderHashCode( dataReader ) + configuration.GetHashCode();
+            return typeof(TReturn).GetHashCode() + GetDataReaderHashCode( dataReader ) + configuration.GetHashCode();
         }
 
         private static Int32 GetDataReaderHashCode( IDataReader dataReader )
