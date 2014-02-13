@@ -49,8 +49,8 @@ namespace SqlObjectHydrator.Tests.ClassMappingTests
 
             var result = generator.GenerateMap( dataReader.Object, configuration );
 
-            Assert.IsTrue( result.Propertys.Any( x => x.Name == "Id" && x.FieldId == 0 && x.Type == typeof ( int ) && !x.Nullable ) );
-            Assert.IsTrue( result.Propertys.Any( x => x.Name == "FullName" && x.FieldId == 1 && x.Type == typeof ( string ) && !x.Nullable ) );
+            Assert.IsTrue( result.Properties.Any( x => x.Name == "Id" && x.FieldId == 0 && x.Type == typeof ( int ) && !x.Nullable ) );
+            Assert.IsTrue( result.Properties.Any( x => x.Name == "FullName" && x.FieldId == 1 && x.Type == typeof ( string ) && !x.Nullable ) );
         }
 
         [Test]
@@ -67,7 +67,7 @@ namespace SqlObjectHydrator.Tests.ClassMappingTests
 
             var result = generator.GenerateMap( dataReader.Object, configuration );
 
-            Assert.IsTrue( result.Propertys.Any( x => x.Name == "RefId" && x.FieldId == 0 && x.Type == typeof ( int ) && x.Nullable ) );
+            Assert.IsTrue( result.Properties.Any( x => x.Name == "RefId" && x.FieldId == 0 && x.Type == typeof ( int ) && x.Nullable ) );
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace SqlObjectHydrator.Tests.ClassMappingTests
 
             var result = generator.GenerateMap( dataReader.Object, configuration );
 
-            Assert.IsTrue( !result.Propertys.Any( x => x.Name == "RefId2" && x.FieldId == 0 && x.Type == typeof ( int ) && x.Nullable ) );
+            Assert.IsTrue( !result.Properties.Any( x => x.Name == "RefId2" && x.FieldId == 0 && x.Type == typeof ( int ) && x.Nullable ) );
         }
 
         [Test]
@@ -99,7 +99,7 @@ namespace SqlObjectHydrator.Tests.ClassMappingTests
 
             var result = generator.GenerateMap( dataReader.Object, configuration );
 
-            Assert.IsTrue( result.Propertys.Any( x => x.Name == "FullName" && x.ConfigurationMapId == 0 && x.FieldId == null && x.Type == typeof ( string ) ) );
+            Assert.IsTrue( result.Properties.Any( x => x.Name == "FullName" && x.ConfigurationMapId == 0 && x.FieldId == null && x.Type == typeof ( string ) ) );
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace SqlObjectHydrator.Tests.ClassMappingTests
 
             var result = generator.GenerateMap( dataReader.Object, configuration );
 
-            Assert.IsTrue( result.Propertys.Count( x => x.Name == "FullName" && x.Type == typeof ( string ) ) == 1 );
+            Assert.IsTrue( result.Properties.Count( x => x.Name == "FullName" && x.Type == typeof ( string ) ) == 1 );
         }
 
         [Test]
@@ -131,11 +131,11 @@ namespace SqlObjectHydrator.Tests.ClassMappingTests
 
             var result = generator.GenerateMap( dataReader.Object, configuration );
 
-            Assert.IsTrue( ( result.Propertys.Single( x => x.Name == "ContactInfo" ) as ClassMap ).Propertys.Any( x => x.Name == "PhoneNumber" && x.ConfigurationMapId == 0 && x.FieldId == null && x.Type == typeof ( string ) ) );
+            Assert.IsTrue( ( result.Properties.Single( x => x.Name == "ContactInfo" ) as ClassMap ).Properties.Any( x => x.Name == "PhoneNumber" && x.ConfigurationMapId == 0 && x.FieldId == null && x.Type == typeof ( string ) ) );
         }
 
         [Test]
-        public void GenerateMap_WhenCalledWithCustomMapForMultipleSubPropertys_ReturnsCorrectPropertys()
+        public void GenerateMap_WhenCalledWithCustomMapForMultipleSubProperties_ReturnsCorrectProperties()
         {
             var dataReader = new Mock<IDataReader>();
 
@@ -147,8 +147,8 @@ namespace SqlObjectHydrator.Tests.ClassMappingTests
 
             var result = generator.GenerateMap( dataReader.Object, configuration );
 
-            Assert.IsTrue( ( result.Propertys.Single( x => x.Name == "ContactInfo" ) as ClassMap ).Propertys.Any( x => x.Name == "PhoneNumber" && x.ConfigurationMapId == 0 && x.FieldId == null && x.Type == typeof ( string ) ) );
-            Assert.IsTrue( ( result.Propertys.Single( x => x.Name == "ContactInfo" ) as ClassMap ).Propertys.Any( x => x.Name == "Postcode" && x.ConfigurationMapId == 1 && x.FieldId == null && x.Type == typeof ( string ) ) );
+            Assert.IsTrue( ( result.Properties.Single( x => x.Name == "ContactInfo" ) as ClassMap ).Properties.Any( x => x.Name == "PhoneNumber" && x.ConfigurationMapId == 0 && x.FieldId == null && x.Type == typeof ( string ) ) );
+            Assert.IsTrue( ( result.Properties.Single( x => x.Name == "ContactInfo" ) as ClassMap ).Properties.Any( x => x.Name == "Postcode" && x.ConfigurationMapId == 1 && x.FieldId == null && x.Type == typeof ( string ) ) );
         }
 
         [Test]
@@ -165,7 +165,7 @@ namespace SqlObjectHydrator.Tests.ClassMappingTests
 
             var result = generator.GenerateMap( dataReader.Object, configuration );
 
-            Assert.IsTrue( result.Propertys.Count( x => x.Name == "ContactInfo" ) == 1 );
+            Assert.IsTrue( result.Properties.Count( x => x.Name == "ContactInfo" ) == 1 );
         }
     }
 }

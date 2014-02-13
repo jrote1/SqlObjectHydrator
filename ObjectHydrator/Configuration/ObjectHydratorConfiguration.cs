@@ -14,9 +14,9 @@ namespace SqlObjectHydrator.Configuration
             MappingsActions = new List<KeyValuePair<LambdaExpression, LambdaExpression>>();
         }
 
-        public ObjectHydratorConfiguration<T> Mapping<TResult>( Expression<Func<T, TResult>> destiniationProperty, Expression<Func<IDataRecord, TResult>> valueGetter )
+        public ObjectHydratorConfiguration<T> Mapping<TResult>( Expression<Func<T, TResult>> destinationProperty, Expression<Func<IDataRecord, TResult>> valueGetter )
         {
-            MappingsActions.Add( new KeyValuePair<LambdaExpression, LambdaExpression>( destiniationProperty, valueGetter ) );
+            MappingsActions.Add( new KeyValuePair<LambdaExpression, LambdaExpression>( destinationProperty, valueGetter ) );
             _hashCodeCache = null;
             _hashCodeCache = GetHashCode();
             return this;

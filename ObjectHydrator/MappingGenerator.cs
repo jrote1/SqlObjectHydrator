@@ -111,7 +111,7 @@ namespace SqlObjectHydrator
 
         private static void SetProperties<T>( ClassMap classMap, ILGenerator emitter, LocalBuilder[] compiledMaps, ObjectHydratorConfiguration<T> configuration, LocalBuilder localBuilder ) where T : new()
         {
-            foreach ( var property in classMap.Propertys )
+            foreach ( var property in classMap.Properties )
             {
                 if ( property is ClassMap )
                 {

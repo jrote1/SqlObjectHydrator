@@ -23,10 +23,10 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		public void ContainsMapping_WhenNoMappingsHaveBeenCached_ReturnsFalse()
 		{
 			var dataReader = GetMockDataReader( 0 );
-			var configuraton = new ObjectHydratorConfiguration<User>();
+			var configuration = new ObjectHydratorConfiguration<User>();
 
 			var mappingCache = new MappingCache();
-			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader.Object, configuraton );
+			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader.Object, configuration );
 
 			Assert.IsFalse( result );
 		}
@@ -35,12 +35,12 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		public void ContainsMapping_WhenMappingsHaveBeenCachedAndMatchesCurrentMapping_ReturnsTrue()
 		{
 			var dataReader = GetMockDataReader( 1 );
-			var configuraton = new ObjectHydratorConfiguration<User>();
+			var configuration = new ObjectHydratorConfiguration<User>();
 			var mappingCache = new MappingCache();
 
-			mappingCache.StoreMapping( dataReader.Object, configuraton, ( x, y ) => new List<User>() );
+			mappingCache.StoreMapping( dataReader.Object, configuration, ( x, y ) => new List<User>() );
 
-			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader.Object, configuraton );
+			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader.Object, configuration );
 
 
 			Assert.IsTrue( result );
@@ -50,14 +50,14 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		public void ContainsMapping_WhenMappingsHaveBeenCachedAndDataReaderMatchesButNotConfiguration_ReturnsTrue()
 		{
 			var dataReader = GetMockDataReader( 2 );
-			var configuraton1 = new ObjectHydratorConfiguration<User>();
-			var configuraton2 = new ObjectHydratorConfiguration<User>()
+			var configuration1 = new ObjectHydratorConfiguration<User>();
+			var configuration2 = new ObjectHydratorConfiguration<User>()
 				.Mapping( x => x.FullName, x => x[ "FirstName" ].ToString() );
 			var mappingCache = new MappingCache();
 
-			mappingCache.StoreMapping( dataReader.Object, configuraton1, ( x, y ) => new List<User>() );
+			mappingCache.StoreMapping( dataReader.Object, configuration1, ( x, y ) => new List<User>() );
 
-			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader.Object, configuraton2 );
+			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader.Object, configuration2 );
 
 
 			Assert.IsFalse( result );
@@ -68,12 +68,12 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		{
 			var dataReader1 = GetMockDataReader( 3 );
 			var dataReader2 = GetMockDataReader( 4 );
-			var configuraton = new ObjectHydratorConfiguration<User>();
+			var configuration = new ObjectHydratorConfiguration<User>();
 			var mappingCache = new MappingCache();
 
-			mappingCache.StoreMapping( dataReader1.Object, configuraton, ( x, y ) => new List<User>() );
+			mappingCache.StoreMapping( dataReader1.Object, configuration, ( x, y ) => new List<User>() );
 
-			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader2.Object, configuraton );
+			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader2.Object, configuration );
 
 
 			Assert.IsFalse( result );
@@ -84,13 +84,13 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		{
 			var dataReader1 = GetMockDataReader( 5 );
 			var dataReader2 = GetMockDataReader( 5 );
-			var configuraton1 = new ObjectHydratorConfiguration<User>();
-			var configuraton2 = new ObjectHydratorConfiguration<User>();
+			var configuration1 = new ObjectHydratorConfiguration<User>();
+			var configuration2 = new ObjectHydratorConfiguration<User>();
 			var mappingCache = new MappingCache();
 
-			mappingCache.StoreMapping( dataReader1.Object, configuraton1, ( x, y ) => new List<User>() );
+			mappingCache.StoreMapping( dataReader1.Object, configuration1, ( x, y ) => new List<User>() );
 
-			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader2.Object, configuraton2 );
+			var result = mappingCache.ContainsMapping<User,List<User>>( dataReader2.Object, configuration2 );
 
 
 			Assert.IsTrue( result );
@@ -100,10 +100,10 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		public void GetCachedMapping_WhenMappingDosentExist_ReturnsNull()
 		{
 			var dataReader = GetMockDataReader( 6 );
-			var configuraton = new ObjectHydratorConfiguration<User>();
+			var configuration = new ObjectHydratorConfiguration<User>();
 			var mappingCache = new MappingCache();
 
-			var result = mappingCache.GetCachedMapping<User,List<User>>( dataReader.Object, configuraton );
+			var result = mappingCache.GetCachedMapping<User,List<User>>( dataReader.Object, configuration );
 
 			Assert.IsNull( result );
 		}
@@ -112,20 +112,20 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		public void ContainsMapping_WhenMappingsHaveBeenCachedAnd_ReturnsFunc()
 		{
 			var dataReader = GetMockDataReader( 7 );
-			var configuraton = new ObjectHydratorConfiguration<User>();
+			var configuration = new ObjectHydratorConfiguration<User>();
 			Func<IDataReader, List<LambdaExpression>, List<User>> mapping = ( x, y ) => new List<User>();
 			var mappingCache = new MappingCache();
 
-			mappingCache.StoreMapping( dataReader.Object, configuraton, mapping );
+			mappingCache.StoreMapping( dataReader.Object, configuration, mapping );
 
-			var result = mappingCache.GetCachedMapping<User,List<User>>( dataReader.Object, configuraton );
+			var result = mappingCache.GetCachedMapping<User,List<User>>( dataReader.Object, configuration );
 
 
 			Assert.AreEqual( mapping, result );
 		}
 
 		[Test]
-		public void GetCachedMapping_WhenMappingHasBeenSavedWithSameDataReaderAndConfiguration_DoesNotThrowExeception()
+		public void GetCachedMapping_WhenMappingHasBeenSavedWithSameDataReaderAndConfiguration_DoesNotThrowException()
 		{
 			var dataReader = new Mock<IDataReader>();
 			var configurationUser = new ObjectHydratorConfiguration<User>();
@@ -141,10 +141,10 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		public void ContainsMapping_WhenNoMappingsHaveBeenCachedForObject_ReturnsFalse()
 		{
 			var dataReader = GetMockDataReader( 0 );
-			var configuraton = new ObjectHydratorConfiguration<User>();
+			var configuration = new ObjectHydratorConfiguration<User>();
 
 			var mappingCache = new MappingCache();
-			var result = mappingCache.ContainsMapping<User,User>( dataReader.Object, configuraton );
+			var result = mappingCache.ContainsMapping<User,User>( dataReader.Object, configuration );
 
 			Assert.IsFalse( result );
 		}
@@ -153,12 +153,12 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		public void ContainsMapping_WhenMappingsHaveBeenCachedForObjectAndMatchesCurrentMapping_ReturnsTrue()
 		{
 			var dataReader = GetMockDataReader( 1 );
-			var configuraton = new ObjectHydratorConfiguration<User>();
+			var configuration = new ObjectHydratorConfiguration<User>();
 			var mappingCache = new MappingCache();
 
-			mappingCache.StoreMapping( dataReader.Object, configuraton, ( x, y ) => new User() );
+			mappingCache.StoreMapping( dataReader.Object, configuration, ( x, y ) => new User() );
 
-			var result = mappingCache.ContainsMapping<User,User>( dataReader.Object, configuraton );
+			var result = mappingCache.ContainsMapping<User,User>( dataReader.Object, configuration );
 
 
 			Assert.IsTrue( result );
@@ -168,13 +168,13 @@ namespace SqlObjectHydrator.Tests.DataReaderMapping
 		public void ContainsMapping_WhenMappingsHaveBeenCachedForObject_ReturnsFunc()
 		{
 			var dataReader = GetMockDataReader( 7 );
-			var configuraton = new ObjectHydratorConfiguration<User>();
+			var configuration = new ObjectHydratorConfiguration<User>();
 			Func<IDataReader, List<LambdaExpression>, User> mapping = ( x, y ) => new User();
 			var mappingCache = new MappingCache();
 
-			mappingCache.StoreMapping( dataReader.Object, configuraton, mapping );
+			mappingCache.StoreMapping( dataReader.Object, configuration, mapping );
 
-			var result = mappingCache.GetCachedMapping<User,User>( dataReader.Object, configuraton );
+			var result = mappingCache.GetCachedMapping<User,User>( dataReader.Object, configuration );
 
 
 			Assert.AreEqual( mapping, result );

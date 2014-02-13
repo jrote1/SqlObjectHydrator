@@ -23,11 +23,11 @@ namespace SqlObjectHydrator
 		public static List<T> DataReaderToList<T>( this IDataReader dataReader, ObjectHydratorConfiguration<T> configuration = null ) where T : new()
 		{
 			configuration = configuration ?? new ObjectHydratorConfiguration<T>();
-			var cachedMapping = GetMapping<T, List<T>>( dataReader, configuration, MappingGenerator.GenerateMapping( dataReader, configuration ) );
+			var cachedMapping = GetMapping( dataReader, configuration, () => MappingGenerator.GenerateMapping( dataReader, configuration ) );
 			return cachedMapping( dataReader, configuration.MappingsActions.Select( x => x.Value ).ToList() );
 		}
 
-		private static Func<IDataReader, List<LambdaExpression>, TReturn> GetMapping<T, TReturn>( IDataReader dataReader, ObjectHydratorConfiguration<T> configuration, Func<IDataReader, List<LambdaExpression>, TReturn> generateMapping ) where T : new()
+		private static Func<IDataReader, List<LambdaExpression>, TReturn> GetMapping<T, TReturn>( IDataReader dataReader, ObjectHydratorConfiguration<T> configuration, Func<Func<IDataReader, List<LambdaExpression>, TReturn>> generateMapping ) where T : new()
 		{
 			var containsMapping = ContainsMapping<T, TReturn>( dataReader, configuration, MappingCache );
 			if ( !containsMapping )
@@ -36,7 +36,7 @@ namespace SqlObjectHydrator
 				{
 					if ( !ContainsMapping<T, TReturn>( dataReader, configuration, MappingCache ) )
 					{
-						MappingCache.StoreMapping( dataReader, configuration, generateMapping );
+						MappingCache.StoreMapping( dataReader, configuration, generateMapping() );
 					}
 				}
 			}
@@ -47,7 +47,7 @@ namespace SqlObjectHydrator
 		public static T DataReaderToObject<T>( this IDataReader dataReader, ObjectHydratorConfiguration<T> configuration = null ) where T : new()
 		{
 			configuration = configuration ?? new ObjectHydratorConfiguration<T>();
-			var cachedMapping = GetMapping<T, T>( dataReader, configuration, MappingGenerator.GenerateSingleObjectMapping( dataReader, configuration ) );
+			var cachedMapping = GetMapping( dataReader, configuration, () => MappingGenerator.GenerateSingleObjectMapping( dataReader, configuration ) );
 			return cachedMapping( dataReader, configuration.MappingsActions.Select( x => x.Value ).ToList() );
 		}
 

@@ -16,7 +16,7 @@ namespace SqlObjectHydrator.ClassMapping
             var result = new ClassMap
             {
                 Type = typeof ( T ),
-                Propertys = new List<PropertyMap>()
+                Properties = new List<PropertyMap>()
             };
 
             for ( var i = 0; i < dataReader.FieldCount; i++ )
@@ -24,7 +24,7 @@ namespace SqlObjectHydrator.ClassMapping
                 var fieldName = dataReader.GetName( i );
                 var fieldType = dataReader.GetFieldType( i );
                 if ( ContainsProperty( properties, fieldName, fieldType ) )
-                    result.Propertys.Add( new PropertyMap
+                    result.Properties.Add( new PropertyMap
                     {
                         Name = fieldName,
                         FieldId = i,
@@ -40,9 +40,9 @@ namespace SqlObjectHydrator.ClassMapping
                 {
                     if ( ( i + 1 ) == parts.Length )
                     {
-                        if ( currentClass.Propertys.Any( x => x.Name == parts[ i ] ) )
-                            currentClass.Propertys.RemoveAll( x => x.Name == parts[ i ] );
-                        currentClass.Propertys.Add( new PropertyMap
+                        if ( currentClass.Properties.Any( x => x.Name == parts[ i ] ) )
+                            currentClass.Properties.RemoveAll( x => x.Name == parts[ i ] );
+                        currentClass.Properties.Add( new PropertyMap
                         {
                             Name = parts[ i ],
                             ConfigurationMapId = configuration.MappingsActions.IndexOf( source ),
@@ -51,17 +51,17 @@ namespace SqlObjectHydrator.ClassMapping
                     }
                     else
                     {
-                        if ( currentClass.Propertys.Any( x => x.Name == parts[ i ] && x.GetType() == typeof ( ClassMap ) ) )
-                            currentClass = currentClass.Propertys.Single( x => x.Name == parts[ i ] ) as ClassMap;
+                        if ( currentClass.Properties.Any( x => x.Name == parts[ i ] && x.GetType() == typeof ( ClassMap ) ) )
+                            currentClass = currentClass.Properties.Single( x => x.Name == parts[ i ] ) as ClassMap;
                         else
                         {
                             var classMap = new ClassMap
                             {
                                 Name = parts[ i ],
                                 Type = currentClass.Type.GetProperty( parts[ i ] ).PropertyType,
-                                Propertys = new List<PropertyMap>()
+                                Properties = new List<PropertyMap>()
                             };
-                            currentClass.Propertys.Add( classMap );
+                            currentClass.Properties.Add( classMap );
                             currentClass = classMap;
                         }
                     }

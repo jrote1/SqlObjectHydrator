@@ -142,7 +142,7 @@ namespace SqlObjectHydrator.Tests
         }
 
         [Test]
-        public void GenerateMapping_WhenPropertyHasMapping_FuncReturnsLisWithCorrectRootValuesSet()
+        public void GenerateMapping_WhenPropertyHasMapping_FuncReturnsListWithCorrectRootValuesSet()
         {
             var dataReader = new Mock<IDataReader>();
             var calls = 0;
@@ -202,7 +202,7 @@ namespace SqlObjectHydrator.Tests
             dataReader.Setup( x => x.Read() ).Callback( () => calls++ ).Returns( () => calls <= 1 );
             dataReader.SetupGet( x => x.FieldCount ).Returns( 1 );
 
-            dataReader.Setup( x => x.GetName( 0 ) ).Returns( "Phonenumber" );
+            dataReader.Setup( x => x.GetName( 0 ) ).Returns( "PhoneNumber" );
             dataReader.Setup( x => x.GetFieldType( 0 ) ).Returns( typeof ( string ) );
             dataReader.Setup( x => x.GetString( 0 ) ).Returns( "Number" );
 
