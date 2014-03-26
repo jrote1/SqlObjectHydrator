@@ -4,14 +4,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D47C95BD-9313-40DC-B0DC-B7C04A8E9E43}</ProjectGuid>
+    <ProjectGuid>{C3A4C689-3992-47E0-BC5A-17F688F0E26C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SqlObjectHydrator</RootNamespace>
-    <AssemblyName>SqlObjectHydrator</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <RootNamespace>SqlObjectHydrator.Test</RootNamespace>
+    <AssemblyName>SqlObjectHydrator.Test</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +20,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,11 +28,13 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Sigil">
-      <HintPath>..\packages\Sigil.4.1.0\lib\net40\Sigil.dll</HintPath>
+    <Reference Include="nunit.framework">
+      <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Rhino.Mocks">
+      <HintPath>..\packages\RhinoMocks.3.6.1\lib\net\Rhino.Mocks.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -45,31 +45,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Caching\CacheManager.cs" />
-    <Compile Include="Caching\MappingCache.cs" />
-    <Compile Include="ClassMapping\BaseMap.cs" />
-    <Compile Include="ClassMapping\ClassMap.cs" />
-    <Compile Include="ClassMapping\ClassMapGenerator.cs" />
-    <Compile Include="ClassMapping\ClassMapResult.cs" />
-    <Compile Include="ClassMapping\ExpandoPropertyMap.cs" />
-    <Compile Include="ClassMapping\Mapping.cs" />
-    <Compile Include="ClassMapping\PropertyExtensionMethods.cs" />
-    <Compile Include="ClassMapping\PropertyMap.cs" />
-    <Compile Include="Configuration\DictionaryTableJoin.cs" />
-    <Compile Include="Configuration\ExpressionGenerators\DynamicToDictionaryGenerator.cs" />
-    <Compile Include="Configuration\IMapping.cs" />
-    <Compile Include="Configuration\IObjectHydratorConfiguration.cs" />
-    <Compile Include="Configuration\ITableJoinMap.cs" />
-    <Compile Include="ILEmitting\DataReaderEmitter.cs" />
-    <Compile Include="ILEmitting\ExpandoObjectInteractor.cs" />
-    <Compile Include="ILEmitting\MappingEnum.cs" />
-    <Compile Include="ILEmitting\MappingGenerator.cs" />
-    <Compile Include="ILEmitting\ObjectSettingEmitter.cs" />
-    <Compile Include="ObjectHydrator.cs" />
+    <Compile Include="Caching\CacheManagerTests.cs" />
+    <Compile Include="ClassMapping\MockDataReader.cs" />
+    <Compile Include="ClassMapping\ClassMapGeneratorTests.cs" />
+    <Compile Include="ClassMapping\ClassMapGeneratorTests].cs" />
+    <Compile Include="Configuration\ExpressionGenerators\DynamicToDictionaryGeneratorTests.cs" />
+    <Compile Include="ILEmitting\ExpandoObjectInteractorTests.cs" />
+    <Compile Include="ILEmitting\MappingGeneratorTests.cs" />
+    <Compile Include="ObjectHydratorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TempDataReader.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ObjectHydrator\SqlObjectHydrator.csproj">
+      <Project>{D47C95BD-9313-40DC-B0DC-B7C04A8E9E43}</Project>
+      <Name>SqlObjectHydrator</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

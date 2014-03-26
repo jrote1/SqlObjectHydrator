@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>SqlObjectHydrator</id>
-        <version>1.1.0</version>
+        <version>1.1.2</version>
         <title>Object Hydrator</title>
         <authors>jrote1</authors>
         <projectUrl>https://github.com/jrote1/SqlObjectHydrator</projectUrl>

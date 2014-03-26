@@ -1,13 +1,18 @@
-using System;
+using System.Reflection;
 
 namespace SqlObjectHydrator.ClassMapping
 {
-    internal class PropertyMap
-    {
-        public Boolean Nullable { get; set; }
-        public Type Type { get; set; }
-        public String Name { get; set; }
-        public Int32? FieldId { get; set; }
-        public Int32? ConfigurationMapId { get; set; }
-    }
+	internal class PropertyMap : BaseMap
+	{
+		public PropertyMap( PropertyInfo propertyInfo, int fieldId )
+		{
+			PropertyInfo = propertyInfo;
+			FieldId = fieldId;
+		}
+
+		public PropertyInfo PropertyInfo { get; set; }
+		public object Map { get; set; }
+		public int FieldId { get; set; }
+		public bool Nullable { get; set; }
+	}
 }

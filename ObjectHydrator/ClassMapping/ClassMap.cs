@@ -1,9 +1,19 @@
+﻿using System;
 using System.Collections.Generic;
 
 namespace SqlObjectHydrator.ClassMapping
 {
-    internal class ClassMap : PropertyMap
-    {
-        public List<PropertyMap> Properties { get; set; }
-    }
+	internal class ClassMap : BaseMap
+	{
+		public ClassMap( Type type, int tableId )
+		{
+			Type = type;
+			Properties = new List<BaseMap>();
+			TableId = tableId;
+		}
+
+		public int TableId { get; set; }
+		public Type Type { get; private set; }
+		public List<BaseMap> Properties { get; private set; }
+	}
 }
