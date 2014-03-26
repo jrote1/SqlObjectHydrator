@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlObjectHydrator", "Object
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlObjectHydrator.Test", "SqlObjectHydrator.Test\SqlObjectHydrator.Test.csproj", "{C3A4C689-3992-47E0-BC5A-17F688F0E26C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlObjectHydrator.Database.Test", "SqlObjectHydrator.Database.Test\SqlObjectHydrator.Database.Test.csproj", "{448B1094-81F5-4C14-9A5E-615A9E1D1C27}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{C3A4C689-3992-47E0-BC5A-17F688F0E26C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3A4C689-3992-47E0-BC5A-17F688F0E26C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3A4C689-3992-47E0-BC5A-17F688F0E26C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{448B1094-81F5-4C14-9A5E-615A9E1D1C27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{448B1094-81F5-4C14-9A5E-615A9E1D1C27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{448B1094-81F5-4C14-9A5E-615A9E1D1C27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{448B1094-81F5-4C14-9A5E-615A9E1D1C27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

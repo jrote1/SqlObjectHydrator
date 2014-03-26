@@ -4,12 +4,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C3A4C689-3992-47E0-BC5A-17F688F0E26C}</ProjectGuid>
+    <ProjectGuid>{448B1094-81F5-4C14-9A5E-615A9E1D1C27}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SqlObjectHydrator.Test</RootNamespace>
-    <AssemblyName>SqlObjectHydrator.Test</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <RootNamespace>SqlObjectHydrator.Database.Test</RootNamespace>
+    <AssemblyName>SqlObjectHydrator.Database.Test</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -30,13 +30,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.ApplicationBlocks.Data">
+      <HintPath>..\lib\Microsoft.ApplicationBlocks.Data.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="Rhino.Mocks">
-      <HintPath>..\packages\RhinoMocks.3.6.1\lib\net\Rhino.Mocks.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -45,23 +46,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Caching\CacheManagerTests.cs" />
-    <Compile Include="ClassMapping\MockDataReader.cs" />
-    <Compile Include="ClassMapping\ClassMapGeneratorTests.cs" />
-    <Compile Include="ClassMapping\ClassMapGeneratorTests].cs" />
-    <Compile Include="Configuration\ExpressionGenerators\DynamicToDictionaryGeneratorTests.cs" />
-    <Compile Include="Configuration\ObjectHydratorConfigurationTests.cs" />
-    <Compile Include="ILEmitting\ExpandoObjectInteractorTests.cs" />
-    <Compile Include="ILEmitting\MappingGeneratorTests.cs" />
-    <Compile Include="ObjectHydratorTests.cs" />
+    <Compile Include="Configuration\ConfigurationTests.cs" />
+    <Compile Include="DatabaseCreator.cs" />
+    <Compile Include="NamespaceWideSetup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SqlChunk.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="DatabaseSchema\CreateDatabase.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DatabaseSchema\CreateDatabaseTables.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DatabaseSchema\InsertData.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ObjectHydrator\SqlObjectHydrator.csproj">
-      <Project>{D47C95BD-9313-40DC-B0DC-B7C04A8E9E43}</Project>
+      <Project>{d47c95bd-9313-40dc-b0dc-b7c04a8e9e43}</Project>
       <Name>SqlObjectHydrator</Name>
     </ProjectReference>
   </ItemGroup>

@@ -88,7 +88,7 @@ namespace SqlObjectHydrator.ILEmitting
 				emitter.Emit( OpCodes.Ldloc, propertyMapLocal.Value );
 				emitter.Emit( OpCodes.Ldarg_0 );
 				emitter.Emit( OpCodes.Call, propertyMapLocal.Value.LocalType.GetMethod( "Invoke" ) );
-				emitter.Emit( OpCodes.Call, propertyMapLocal.Key.GetSetMethod() );
+				emitter.Emit( OpCodes.Callvirt, propertyMapLocal.Key.GetSetMethod() );
 			}
 
 			//Add Root Variable To Result
