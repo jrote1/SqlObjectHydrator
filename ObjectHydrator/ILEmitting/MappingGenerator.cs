@@ -22,20 +22,24 @@ namespace SqlObjectHydrator.ILEmitting
 			var baseType = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) ) ? typeof( T ).GetGenericArguments()[ 0 ] : typeof( T );
 			var isList = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) );
 
-			//var method = new DynamicMethod( "", typeof( T ), new[]
-			//{
-			//	typeof( IDataReader ),
-			//	typeof( Dictionary<MappingEnum, object> )
-			//}, true );
-			//var emitter = method.GetILGenerator();
+			#region working dynamicmethod
+			var method = new DynamicMethod( "", typeof( T ), new[]
+			{
+				typeof( IDataReader ),
+				typeof( Dictionary<MappingEnum, object> )
+			}, true );
+			var emitter = method.GetILGenerator();
+			#endregion
 
-  			var assemblyName = new AssemblyName("SomeName");
-			var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndSave, @"d:\Spawtz");
-			var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name, assemblyName.Name +  ".dll");
+			#region dynamicmethod that outputs dll
+  			//var assemblyName = new AssemblyName("SomeName");
+			//var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndSave, @"d:\");
+			//var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name, assemblyName.Name +  ".dll");
 
-			TypeBuilder builder = moduleBuilder.DefineType("Test", TypeAttributes.Public);
-			var methodBuilder = builder.DefineMethod("DynamicCreate", MethodAttributes.Public, typeof(T), new[] { typeof( IDataReader ),typeof( Dictionary<MappingEnum, object> ) });
-  			var emitter = methodBuilder.GetILGenerator();
+			//TypeBuilder builder = moduleBuilder.DefineType("Test", TypeAttributes.Public);
+			//var methodBuilder = builder.DefineMethod("DynamicCreate", MethodAttributes.Public, typeof(T), new[] { typeof( IDataReader ),typeof( Dictionary<MappingEnum, object> ) });
+  			//var emitter = methodBuilder.GetILGenerator();
+  			#endregion
 
 			//Create Func Variables
 			var tableJoinsLocalBuilders = new Dictionary<KeyValuePair<Type, Type>, KeyValuePair<LocalBuilder, LocalBuilder>>();
@@ -202,10 +206,15 @@ namespace SqlObjectHydrator.ILEmitting
 				emitter.Emit( OpCodes.Call, typeof( Enumerable ).GetMethods().First( x => x.Name == "FirstOrDefault" && x.GetParameters().Count() == 1 ).MakeGenericMethod( typeof( T ) ) );
 			emitter.Emit( OpCodes.Ret );
 
-		  var t = builder.CreateType();
-		    assemblyBuilder.Save(assemblyName.Name + ".dll");
-		  return null;
-		//return (Func<IDataReader, Dictionary<MappingEnum, object>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, T> ) );
+			#region dynamicmethod that outputs dll
+		  	//var t = builder.CreateType();
+		    	//assemblyBuilder.Save(assemblyName.Name + ".dll");
+		  	//return null;
+		  	#endregion
+		  	
+		  	#region working dynamicmethod
+			return (Func<IDataReader, Dictionary<MappingEnum, object>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, T> ) );
+			#endregion
 		}
 
 		public static void JoinTables<TParent, TChild>( List<TParent> parents, IEnumerable<TChild> children, Func<TParent, TChild, bool> canJoin, Action<TParent, List<TChild>> setFunc )
