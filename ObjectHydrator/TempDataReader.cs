@@ -153,7 +153,7 @@ namespace SqlObjectHydrator
 
 		public bool IsDBNull( int i )
 		{
-			throw new NotImplementedException();
+			return GetValue( i ) == DBNull.Value;
 		}
 
 		public int FieldCount
@@ -163,7 +163,7 @@ namespace SqlObjectHydrator
 
 		object IDataRecord.this[ int i ]
 		{
-			get { throw new NotImplementedException(); }
+			get { return GetValue( i ); }
 		}
 
 		object IDataRecord.this[ string name ]
