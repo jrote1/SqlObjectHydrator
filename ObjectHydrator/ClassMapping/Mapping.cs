@@ -33,7 +33,13 @@ namespace SqlObjectHydrator.ClassMapping
 
 		public void PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, Func<IDataRecord, TResult> setAction )
 		{
-			PropertyMaps.Add( new KeyValuePair<PropertyInfo, KeyValuePair<Type, object>>( typeof( T ).GetProperty( property.ToString().Split( '.' ).Last() ), new KeyValuePair<Type, object>( typeof( T ), setAction ) ) );
+			PropertyMaps.Add( new KeyValuePair<PropertyInfo, KeyValuePair<Type, object>>( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new KeyValuePair<Type, object>( typeof( T ), setAction ) ) );
+		}
+
+		private static PropertyInfo GetPropertyInfo<T>( string name )
+		{
+			var propertyInfo = typeof( T ).GetProperty( name ) ?? typeof( T ).GetProperty( name, BindingFlags.Instance | BindingFlags.NonPublic );
+			return propertyInfo;
 		}
 
 		void IMapping.TableJoin<TParent, TChild>( Func<TParent, TChild, bool> canJoin, Action<TParent, List<TChild>> listSet )

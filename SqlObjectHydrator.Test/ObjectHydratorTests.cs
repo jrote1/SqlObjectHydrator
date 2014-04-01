@@ -15,7 +15,7 @@ namespace SqlObjectHydrator.Test
 	public class RootTable
 	{
 		public string Name { get; set; }
-		public int Size { get; set; }
+		internal int Size { get; set; }
 		public List<Product> Products { get; set; }
 		public TransactionManager TransactionManager { get; set; }
 		public DateTime DueDate { get; set;  }

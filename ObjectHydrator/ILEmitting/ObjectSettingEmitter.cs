@@ -20,7 +20,7 @@ namespace SqlObjectHydrator.ILEmitting
 			var tempRoot = emitter.DeclareLocal( classMap.Type );
 
 			var propertyMapsList = mapping.PropertyMaps.ToList();
-			var propertyMapLocals = new Dictionary<PropertyInfo,LocalBuilder>();
+			var propertyMapLocals = new Dictionary<PropertyInfo, LocalBuilder>();
 			var propertyMaps = emitter.DeclareLocal( typeof( List<object> ) );
 			emitter.Emit( OpCodes.Ldarg_1 );
 			emitter.Emit( OpCodes.Ldc_I4, (int)MappingEnum.PropertyMap );
@@ -35,11 +35,11 @@ namespace SqlObjectHydrator.ILEmitting
 					var localBuilder = emitter.DeclareLocal( propertyMap.Value.Value.GetType() );
 					emitter.Emit( OpCodes.Ldloc, propertyMaps );
 					emitter.Emit( OpCodes.Ldc_I4, propertyMapsList.IndexOf( propertyMap ) );
-					emitter.Emit( OpCodes.Call, typeof(List<object> ).GetProperty( "Item" ).GetGetMethod() );
+					emitter.Emit( OpCodes.Call, typeof( List<object> ).GetProperty( "Item" ).GetGetMethod() );
 					emitter.Emit( OpCodes.Castclass, localBuilder.LocalType );
 					emitter.Emit( OpCodes.Stloc, localBuilder );
 
-					propertyMapLocals.Add( propertyMap.Key,localBuilder );
+					propertyMapLocals.Add( propertyMap.Key, localBuilder );
 				}
 			}
 
@@ -88,7 +88,7 @@ namespace SqlObjectHydrator.ILEmitting
 				emitter.Emit( OpCodes.Ldloc, propertyMapLocal.Value );
 				emitter.Emit( OpCodes.Ldarg_0 );
 				emitter.Emit( OpCodes.Call, propertyMapLocal.Value.LocalType.GetMethod( "Invoke" ) );
-				emitter.Emit( OpCodes.Callvirt, propertyMapLocal.Key.GetSetMethod() );
+				emitter.Emit( OpCodes.Callvirt, propertyMapLocal.Key.GetSetMethod() ?? propertyMapLocal.Key.GetSetMethod( true ) );
 			}
 
 			//Add Root Variable To Result
