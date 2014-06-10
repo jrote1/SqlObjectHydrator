@@ -2,14 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>SqlObjectHydrator</id>
-        <version>2.0.5</version>
+        <version>2.0.8</version>
         <title>Sql Object Hydrator</title>
         <authors>jrote1</authors>
         <projectUrl>https://github.com/jrote1/SqlObjectHydrator</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>A extremely fast library that maps IDataReader's to objects</description>
-        <releaseNotes>There was an issue when if are hydrating the same object twice on
-multiple threads sometimes it would say key already exists.</releaseNotes>
+        <releaseNotes>Fixed version number</releaseNotes>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System.Net" targetFramework=".NETFramework4.0" />
         </frameworkAssemblies>
