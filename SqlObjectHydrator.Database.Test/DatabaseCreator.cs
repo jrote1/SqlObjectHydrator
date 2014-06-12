@@ -84,13 +84,13 @@ end
 
 				var sqlParts = sql.Split( new[]
 				{
-					"GO"
+					"GO\r\n",
+					"GO\r",
+					"GO\n"
 				}, StringSplitOptions.RemoveEmptyEntries );
 
-				sqlParts = sqlParts.Select( x => x.Trim() ).Where( x => !String.IsNullOrEmpty( x ) ).ToArray();
-
 				foreach ( var sqlPart in sqlParts )
-					ExecuteCommand( connection, sqlPart.Trim() );
+					ExecuteCommand( connection, sqlPart );
 
 				connection.Close();
 			}
