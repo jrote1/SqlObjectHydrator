@@ -12,6 +12,7 @@ namespace SqlObjectHydrator.Configuration
 		void TableJoin<TParent, TChild>( Func<TParent, TChild, bool> canJoin, Action<TParent, List<TChild>> listSet );
 		void Join<TParent, TChild>( Action<TParent, List<TChild>> listSet );
 		void AddJoin( Func<ITableJoin, ITableJoinMap> func );
+		void VariableTableType<T>( Func<IDataRecord,Type> action );
 	}
 
 	public interface ITableJoin

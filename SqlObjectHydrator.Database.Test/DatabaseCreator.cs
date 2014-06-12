@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace SqlObjectHydrator.Database.Test
@@ -83,11 +84,13 @@ end
 
 				var sqlParts = sql.Split( new[]
 				{
-					"GO\r\n"
+					"GO"
 				}, StringSplitOptions.RemoveEmptyEntries );
 
+				sqlParts = sqlParts.Select( x => x.Trim() ).Where( x => !String.IsNullOrEmpty( x ) ).ToArray();
+
 				foreach ( var sqlPart in sqlParts )
-					ExecuteCommand( connection, sqlPart );
+					ExecuteCommand( connection, sqlPart.Trim() );
 
 				connection.Close();
 			}

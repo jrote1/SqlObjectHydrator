@@ -16,6 +16,7 @@ namespace SqlObjectHydrator.ClassMapping
 		public List<DictionaryTableJoin> DictionaryTableJoins { get; set; }
 		public Dictionary<KeyValuePair<Type, Type>, KeyValuePair<object, object>> TableJoins { get; set; }
 		public Dictionary<KeyValuePair<Type, Type>, object> Joins { get; set; }
+		public Dictionary<Type, object> VariableTableTypes { get; set; }
 
 		public Mapping()
 		{
@@ -24,6 +25,7 @@ namespace SqlObjectHydrator.ClassMapping
 			DictionaryTableJoins = new List<DictionaryTableJoin>();
 			TableJoins = new Dictionary<KeyValuePair<Type, Type>, KeyValuePair<object, object>>();
 			Joins = new Dictionary<KeyValuePair<Type, Type>, object>();
+			VariableTableTypes = new Dictionary<Type, object>();
 		}
 
 		void IMapping.Table<T>( int id )
@@ -31,7 +33,7 @@ namespace SqlObjectHydrator.ClassMapping
 			TableMaps.Add( id, typeof( T ) );
 		}
 
-		public void PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, Func<IDataRecord, TResult> setAction )
+		void IMapping.PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, Func<IDataRecord, TResult> setAction )
 		{
 			PropertyMaps.Add( new KeyValuePair<PropertyInfo, KeyValuePair<Type, object>>( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new KeyValuePair<Type, object>( typeof( T ), setAction ) ) );
 		}
@@ -47,7 +49,7 @@ namespace SqlObjectHydrator.ClassMapping
 			TableJoins.Add( new KeyValuePair<Type, Type>( typeof( TParent ), typeof( TChild ) ), new KeyValuePair<object, object>( canJoin, listSet ) );
 		}
 
-		public void Join<TParent, TChild>( Action<TParent, List<TChild>> listSet )
+		void IMapping.Join<TParent, TChild>( Action<TParent, List<TChild>> listSet )
 		{
 			Joins.Add( new KeyValuePair<Type, Type>( typeof( TParent ), typeof( TChild ) ), listSet );
 		}
@@ -61,6 +63,11 @@ namespace SqlObjectHydrator.ClassMapping
 				DictionaryTableJoins.Add( dictionaryTableJoin );
 				TableMaps.Add( dictionaryTableJoin.ChildTable, typeof( ExpandoObject ) );
 			}
+		}
+
+		void IMapping.VariableTableType<T>( Func<IDataRecord, Type> action )
+		{
+			VariableTableTypes.Add( typeof( T ), action );
 		}
 	}
 

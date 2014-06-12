@@ -91,11 +91,11 @@ namespace SqlObjectHydrator.Test.ClassMapping
 
 	public class Configuration : IObjectHydratorConfiguration
 	{
-		public static readonly Func<IDataRecord,string> FirstNameMap = record => record.GetString( 0 );
+		private static readonly Func<IDataRecord, string> FirstNameMap = record => record.GetString( 0 );
 
 		public void Mapping( IMapping mapping )
 		{
-			mapping.PropertyMap<User,string>( x=>x.FirstName,FirstNameMap );
+			mapping.PropertyMap<User, string>( x => x.FirstName, FirstNameMap );
 		}
 	}
 }
