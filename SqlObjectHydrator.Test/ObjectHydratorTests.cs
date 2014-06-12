@@ -7,10 +7,7 @@ using SqlObjectHydrator.Test.ClassMapping;
 
 namespace SqlObjectHydrator.Test
 {
-	public class TransactionManager
-	{
-		
-	}
+	public class TransactionManager {}
 
 	public class RootTable
 	{
@@ -18,7 +15,7 @@ namespace SqlObjectHydrator.Test
 		internal int Size { get; set; }
 		public List<Product> Products { get; set; }
 		public TransactionManager TransactionManager { get; set; }
-		public DateTime DueDate { get; set;  }
+		public DateTime DueDate { get; set; }
 	}
 
 	public class Product
@@ -45,8 +42,8 @@ namespace SqlObjectHydrator.Test
 			mapping.Table<ProductRating>( 3 );
 
 			mapping.PropertyMap<RootTable, int>( x => x.Size, record => record.GetInt32( 1 ) * 2 );
-			mapping.PropertyMap<RootTable,TransactionManager>( x=>x.TransactionManager,reader=>null );
-			mapping.PropertyMap<RootTable,DateTime>( x => x.DueDate, ( record ) => record.GetValue( 2) == DBNull.Value ? default( DateTime ) : record.GetDateTime( 2 ) );
+			mapping.PropertyMap<RootTable, TransactionManager>( x => x.TransactionManager, reader => null );
+			mapping.PropertyMap<RootTable, DateTime>( x => x.DueDate, ( record ) => record.GetValue( 2 ) == DBNull.Value ? default( DateTime ) : record.GetDateTime( 2 ) );
 			mapping.TableJoin<Product, ProductRating>( ( product, rating ) => product.Id == rating.ProductId, ( product, list ) => product.ProductRatings = list );
 			mapping.Join<RootTable, Product>( ( x, y ) => x.Products = y );
 			mapping.AddJoin( x => x.DictionaryTableJoin<Product>()
@@ -71,7 +68,7 @@ namespace SqlObjectHydrator.Test
 		public void DataReaderToList_WhenUsingConfiguration_ReturnsCorrectResult()
 		{
 			var dataReader = new MockDataReader();
-			var rootTable = dataReader.AddTable( "Name", "Size","DueDate" );
+			var rootTable = dataReader.AddTable( "Name", "Size", "DueDate" );
 			var products = dataReader.AddTable( "Id", "Name", "Price", "Available" );
 			var stock = dataReader.AddTable( "ProductId", "Id", "Quantity" );
 			var ratings = dataReader.AddTable( "ProductId", "Rating" );
@@ -106,5 +103,27 @@ namespace SqlObjectHydrator.Test
 			Assert.AreEqual( 1, result[ 0 ].Products[ 1 ].ProductRatings.Count );
 			Assert.AreEqual( 2, result[ 0 ].Products[ 1 ].ProductRatings[ 0 ].Rating );
 		}
+
+
+		[Test]
+		public void DataReaderToList_WithNullablePropertyThatHasAValueOnTheFirstRowAndNullOnTheSecondRow_SetsTheSecondObjectsPropertyToNull()
+		{
+			var dataReader = new MockDataReader();
+			var rootTable = dataReader.AddTable( "Name", "Score" );
+
+			dataReader.AddRow( rootTable, "Team A", (int?)12 );
+			dataReader.AddRow( rootTable, "Team B", DBNull.Value );
+
+			var result = dataReader.DataReaderToList<NullableTest>();
+
+			Assert.AreEqual( 12, result[ 0 ].Score );
+			Assert.IsNull( result[ 1 ].Score );
+		}
+	}
+
+	public class NullableTest
+	{
+		public string Name { get; set; }
+		public int? Score { get; set; }
 	}
 }

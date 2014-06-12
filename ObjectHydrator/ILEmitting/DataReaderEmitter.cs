@@ -13,6 +13,9 @@ namespace SqlObjectHydrator.ILEmitting
 			{
 				var tempValue = emitter.DeclareLocal( type );
 
+				emitter.Emit( OpCodes.Ldloca_S, tempValue );
+				emitter.Emit( OpCodes.Initobj, type );
+
 				var ifNotNull = emitter.DefineLabel();
 				emitter.Emit( OpCodes.Ldarg_0 );
 				emitter.Emit( OpCodes.Ldc_I4, fieldId );
