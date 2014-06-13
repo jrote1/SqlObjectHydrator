@@ -43,10 +43,6 @@ namespace SqlObjectHydrator.Caching
 		public static int GetReaderHashCode( IDataReader dataReader )
 		{
 			var hashcode = 0;
-			if ( dataReader is TempDataReader )
-			{
-				return dataReader.GetHashCode();
-			}
 			for ( var i = 0; i < dataReader.FieldCount; i++ )
 			{
 				hashcode += dataReader.GetFieldType( i ).GetHashCode();
