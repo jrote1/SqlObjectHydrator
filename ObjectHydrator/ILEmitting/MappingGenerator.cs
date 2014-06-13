@@ -17,29 +17,34 @@ namespace SqlObjectHydrator.ILEmitting
 			dataReader.NextResult();
 		}
 
-		public static Func<IDataReader, Dictionary<MappingEnum, object>, T> Generate<T>( IDataReader dataReader, ClassMapResult classMapResult ) where T : new()
+		public static Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> Generate<T>( IDataReader dataReader, ClassMapResult classMapResult ) where T : new()
 		{
 			var baseType = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) ) ? typeof( T ).GetGenericArguments()[ 0 ] : typeof( T );
 			var isList = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) );
 
 			#region working dynamicmethod
+
 			var method = new DynamicMethod( "", typeof( T ), new[]
 			{
 				typeof( IDataReader ),
-				typeof( Dictionary<MappingEnum, object> )
+				typeof( Dictionary<MappingEnum, object> ),
+				typeof( Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> )
 			}, true );
 			var emitter = method.GetILGenerator();
+
 			#endregion
 
 			#region dynamicmethod that outputs dll
-  			//var assemblyName = new AssemblyName("SomeName");
+
+			//var assemblyName = new AssemblyName("SomeName");
 			//var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndSave, @"d:\");
 			//var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name, assemblyName.Name +  ".dll");
 
 			//TypeBuilder builder = moduleBuilder.DefineType("Test", TypeAttributes.Public);
 			//var methodBuilder = builder.DefineMethod("DynamicCreate", MethodAttributes.Public, typeof(T), new[] { typeof( IDataReader ),typeof( Dictionary<MappingEnum, object> ) });
-  			//var emitter = methodBuilder.GetILGenerator();
-  			#endregion
+			//var emitter = methodBuilder.GetILGenerator();
+
+			#endregion
 
 			//Create Func Variables
 			var tableJoinsLocalBuilders = new Dictionary<KeyValuePair<Type, Type>, KeyValuePair<LocalBuilder, LocalBuilder>>();
@@ -150,14 +155,16 @@ namespace SqlObjectHydrator.ILEmitting
 			//Load Tables
 			var localBuilders = new Dictionary<KeyValuePair<Type, int>, LocalBuilder>();
 
-			var maxTableId = classMapResult.ClassMaps.Last().TableId;
+			var maxTableId = classMapResult.Mappings.TableMaps.Select( x=>x.Key ).OrderBy( x=>x).Last();
 			for ( var i = 0; i <= maxTableId; i++ )
 			{
-				var classMap = classMapResult.ClassMaps.FirstOrDefault( x => x.TableId == i );
-				if ( classMap == null )
+				if ( ! classMapResult.Mappings.TableMaps.ContainsKey( i ) )
 					continue;
-				var localBuilder = ObjectSettingEmitter.Emit( emitter, classMap, classMapResult.Mappings );
-				localBuilders.Add( new KeyValuePair<Type, int>( classMap.Type, i ), localBuilder );
+				
+				var type = classMapResult.Mappings.TableMaps[ i ];
+
+				var localBuilder = ObjectSettingEmitter.Emit( emitter, type, classMapResult.Mappings );
+				localBuilders.Add( new KeyValuePair<Type, int>( type, i ), localBuilder );
 				emitter.Emit( OpCodes.Ldarg_0 );
 				emitter.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "NextResult" ) );
 			}
@@ -207,13 +214,17 @@ namespace SqlObjectHydrator.ILEmitting
 			emitter.Emit( OpCodes.Ret );
 
 			#region dynamicmethod that outputs dll
-		  	//var t = builder.CreateType();
-		    	//assemblyBuilder.Save(assemblyName.Name + ".dll");
-		  	//return null;
-		  	#endregion
-		  	
-		  	#region working dynamicmethod
-			return (Func<IDataReader, Dictionary<MappingEnum, object>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, T> ) );
+
+			//var t = builder.CreateType();
+			//assemblyBuilder.Save(assemblyName.Name + ".dll");
+			//return null;
+
+			#endregion
+
+			#region working dynamicmethod
+
+			return (Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> ) );
+
 			#endregion
 		}
 

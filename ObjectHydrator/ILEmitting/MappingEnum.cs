@@ -5,6 +5,7 @@ namespace SqlObjectHydrator.ILEmitting
 		TableJoin,
 		Join,
 		DictionaryJoin,
-		PropertyMap
+		PropertyMap,
+		VariableTableType
 	}
 }

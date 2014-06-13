@@ -33,6 +33,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Pfz.TypeBuilding">
+      <HintPath>..\packages\Pfz.TypeBuilding.1.0.1\lib\net40-Client\Pfz.TypeBuilding.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -42,14 +45,10 @@
   <ItemGroup>
     <Compile Include="Caching\CacheManager.cs" />
     <Compile Include="Caching\MappingCache.cs" />
-    <Compile Include="ClassMapping\BaseMap.cs" />
-    <Compile Include="ClassMapping\ClassMap.cs" />
     <Compile Include="ClassMapping\ClassMapGenerator.cs" />
     <Compile Include="ClassMapping\ClassMapResult.cs" />
-    <Compile Include="ClassMapping\ExpandoPropertyMap.cs" />
     <Compile Include="ClassMapping\Mapping.cs" />
     <Compile Include="ClassMapping\PropertyExtensionMethods.cs" />
-    <Compile Include="ClassMapping\PropertyMap.cs" />
     <Compile Include="Configuration\DictionaryTableJoin.cs" />
     <Compile Include="Configuration\ExpressionGenerators\DynamicToDictionaryGenerator.cs" />
     <Compile Include="Configuration\IMapping.cs" />
@@ -64,7 +63,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TempDataReader.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

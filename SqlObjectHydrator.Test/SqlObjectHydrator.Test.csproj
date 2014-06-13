@@ -43,7 +43,6 @@
   <ItemGroup>
     <Compile Include="Caching\CacheManagerTests.cs" />
     <Compile Include="ClassMapping\MockDataReader.cs" />
-    <Compile Include="ClassMapping\ClassMapGeneratorTests.cs" />
     <Compile Include="ClassMapping\ClassMapGeneratorTests].cs" />
     <Compile Include="Configuration\ExpressionGenerators\DynamicToDictionaryGeneratorTests.cs" />
     <Compile Include="Configuration\ObjectHydratorConfigurationTests.cs" />
@@ -60,10 +59,6 @@
       <Project>{D47C95BD-9313-40DC-B0DC-B7C04A8E9E43}</Project>
       <Name>SqlObjectHydrator</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="acknowledgements.txt" />
-    <Content Include="license.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

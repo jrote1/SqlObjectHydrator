@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Dynamic;
+using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using SqlObjectHydrator.ClassMapping;
 using SqlObjectHydrator.Configuration;
@@ -35,11 +38,13 @@ namespace SqlObjectHydrator.Test.ILEmitting
 		{
 			var classMapResult = new ClassMapResult
 			{
-				ClassMaps = new List<ClassMap>
+				Mappings = new Mapping
 				{
-					new ClassMap( typeof( TestClass ), 0 )
-				},
-				Mappings = new Mapping()
+					TableMaps = new Dictionary<int, Type>
+					{
+						{ 0, typeof( TestClass ) }
+					}
+				}
 			};
 			var mockDataReader = new MockDataReader();
 			var table = mockDataReader.AddTable();
@@ -47,7 +52,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var result = MappingGenerator.Generate<TestClass>( new MockDataReader(), classMapResult );
 
-			result( mockDataReader, new Dictionary<MappingEnum, object>() );
+			result( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
 		}
 
 		[Test]
@@ -55,25 +60,22 @@ namespace SqlObjectHydrator.Test.ILEmitting
 		{
 			var classMapResult = new ClassMapResult
 			{
-				ClassMaps = new List<ClassMap>
+				Mappings = new Mapping
 				{
-					new ClassMap( typeof( TestClass ), 0 )
-				},
-				Mappings = new Mapping()
+					TableMaps = new Dictionary<int, Type>
+					{
+						{ 0, typeof( TestClass ) }
+					}
+				}
 			};
-
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "Name1" ), 0 ) );
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "Name2" ), 1 ) );
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "Length1" ), 2 ) );
 
 			var mockDataReader = new MockDataReader();
 			var table = mockDataReader.AddTable( "Name1", "Name 2", "Length1" );
 			mockDataReader.AddRow( table, "Name 1", DBNull.Value, 1 );
 
-
 			var func = MappingGenerator.Generate<TestClass>( new MockDataReader(), classMapResult );
 
-			var result = func( mockDataReader, new Dictionary<MappingEnum, object>() );
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
 
 			Assert.AreEqual( "Name 1", result.Name1 );
 			Assert.AreEqual( null, result.Name2 );
@@ -85,17 +87,14 @@ namespace SqlObjectHydrator.Test.ILEmitting
 		{
 			var classMapResult = new ClassMapResult
 			{
-				ClassMaps = new List<ClassMap>
+				Mappings = new Mapping
 				{
-					new ClassMap( typeof( TestClass ), 0 )
-				},
-				Mappings = new Mapping()
+					TableMaps = new Dictionary<int, Type>
+					{
+						{ 0, typeof( TestClass ) }
+					}
+				}
 			};
-
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "Length2" ), 0 )
-			{
-				Nullable = true
-			} );
 
 			var mockDataReader = new MockDataReader();
 			var table = mockDataReader.AddTable( "Length2" );
@@ -103,7 +102,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<TestClass>( new MockDataReader(), classMapResult );
 
-			var result = func( mockDataReader, new Dictionary<MappingEnum, object>() );
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
 
 			Assert.AreEqual( null, result.Length2 );
 		}
@@ -113,17 +112,14 @@ namespace SqlObjectHydrator.Test.ILEmitting
 		{
 			var classMapResult = new ClassMapResult
 			{
-				ClassMaps = new List<ClassMap>
+				Mappings = new Mapping
 				{
-					new ClassMap( typeof( TestClass ), 0 )
-				},
-				Mappings = new Mapping()
+					TableMaps = new Dictionary<int, Type>
+					{
+						{ 0, typeof( TestClass ) }
+					}
+				}
 			};
-
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "Length2" ), 0 )
-			{
-				Nullable = true
-			} );
 
 			var mockDataReader = new MockDataReader();
 			var table = mockDataReader.AddTable( "Length2" );
@@ -131,7 +127,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<TestClass>( new MockDataReader(), classMapResult );
 
-			var result = func( mockDataReader, new Dictionary<MappingEnum, object>() );
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
 
 			Assert.AreEqual( 1, result.Length2 );
 		}
@@ -142,36 +138,22 @@ namespace SqlObjectHydrator.Test.ILEmitting
 			IMapping mapping = new Mapping();
 			Func<TestClass, TestContent, bool> canJoin = ( x, y ) => x.TestContentId == y.Id;
 			Action<TestClass, List<TestContent>> listSet = ( x, y ) => x.TestContents = y;
+
+			mapping.Table<TestClass>( 0 );
+			mapping.Table<TestContent>( 1 );
+
 			mapping.TableJoin( canJoin, listSet );
 
 			var classMapResult = new ClassMapResult
 			{
-				ClassMaps = new List<ClassMap>
-				{
-					new ClassMap( typeof( TestClass ), 0 ),
-					new ClassMap( typeof( TestContent ), 1 )
-				},
 				Mappings = (Mapping)mapping
 			};
-
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "TestContentId" ), 0 )
-			{
-				Nullable = false
-			} );
-			classMapResult.ClassMaps[ 1 ].Properties.Add( new PropertyMap( typeof( TestContent ).GetProperty( "Id" ), 0 )
-			{
-				Nullable = false
-			} );
-			classMapResult.ClassMaps[ 1 ].Properties.Add( new PropertyMap( typeof( TestContent ).GetProperty( "Name" ), 1 )
-			{
-				Nullable = false
-			} );
 
 			var mockDataReader = new MockDataReader();
 			var table = mockDataReader.AddTable( "Length2", "TestContentId" );
 			var contentTable = mockDataReader.AddTable( "Id", "Name" );
 
-			mockDataReader.AddRow( table, 1 );
+			mockDataReader.AddRow( table, 1, 1 );
 
 			mockDataReader.AddRow( contentTable, 1, "Name1" );
 			mockDataReader.AddRow( contentTable, 2, "Name2" );
@@ -187,7 +169,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 						new KeyValuePair<object, object>( canJoin, listSet )
 					}
 				}
-			} );
+			}, new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
 
 			Assert.AreEqual( 1, result.TestContents.Count );
 			Assert.AreEqual( "Name1", result.TestContents[ 0 ].Name );
@@ -200,31 +182,16 @@ namespace SqlObjectHydrator.Test.ILEmitting
 			Action<TestClass, List<TestContent>> listSet = ( x, y ) => x.TestContents = y;
 			mapping.Join( listSet );
 
+			mapping.Table<TestClass>( 0 );
+			mapping.Table<TestContent>( 1 );
+
 			var classMapResult = new ClassMapResult
 			{
-				ClassMaps = new List<ClassMap>
-				{
-					new ClassMap( typeof( TestClass ), 0 ),
-					new ClassMap( typeof( TestContent ), 1 )
-				},
 				Mappings = (Mapping)mapping
 			};
 
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "TestContentId" ), 0 )
-			{
-				Nullable = false
-			} );
-			classMapResult.ClassMaps[ 1 ].Properties.Add( new PropertyMap( typeof( TestContent ).GetProperty( "Id" ), 0 )
-			{
-				Nullable = false
-			} );
-			classMapResult.ClassMaps[ 1 ].Properties.Add( new PropertyMap( typeof( TestContent ).GetProperty( "Name" ), 1 )
-			{
-				Nullable = false
-			} );
-
 			var mockDataReader = new MockDataReader();
-			var table = mockDataReader.AddTable( "Length2", "TestContentId" );
+			var table = mockDataReader.AddTable( "Length2" );
 			var contentTable = mockDataReader.AddTable( "Id", "Name" );
 			mockDataReader.AddRow( table, 1 );
 
@@ -241,7 +208,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 						listSet
 					}
 				}
-			} );
+			}, new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
 
 			Assert.AreEqual( 2, result.TestContents.Count );
 			Assert.AreEqual( "Name1", result.TestContents[ 0 ].Name );
@@ -255,34 +222,25 @@ namespace SqlObjectHydrator.Test.ILEmitting
 			Func<TestClass, dynamic, bool> condition = ( @class, o ) => true;
 			Action<TestClass, Dictionary<int, string>> destination = ( @class, values ) => @class.TestContentDictionary = values;
 			mapping.AddJoin( x =>
-				                 x.DictionaryTableJoin<TestClass>()
-				                  .Condition( condition )
-				                  .KeyColumn( "Id" )
-				                  .ValueColumn( "Name" )
-				                  .SetDestinationProperty( destination )
-				                  .ChildTable( 1 ) );
+				x.DictionaryTableJoin<TestClass>()
+					.Condition( condition )
+					.KeyColumn( "Id" )
+					.ValueColumn( "Name" )
+					.SetDestinationProperty( destination )
+					.ChildTable( 1 ) );
+
+			mapping.Table<TestClass>( 0 );
 
 			var classMapResult = new ClassMapResult
 			{
-				ClassMaps = new List<ClassMap>
-				{
-					new ClassMap( typeof( TestClass ), 0 ),
-					new ClassMap( typeof( ExpandoObject ), 1 )
-				},
 				Mappings = (Mapping)mapping
 			};
-
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "TestContentId" ), 0 )
-			{
-				Nullable = false
-			} );
-			classMapResult.ClassMaps[ 1 ].Properties.Add( new ExpandoPropertyMap( "Id", typeof( int ), 0 ) );
-			classMapResult.ClassMaps[ 1 ].Properties.Add( new ExpandoPropertyMap( "Name", typeof( string ), 1 ) );
 
 			var mockDataReader = new MockDataReader();
 			var table = mockDataReader.AddTable( "Length2", "TestContentId" );
 			var contentTable = mockDataReader.AddTable( "Id", "Name" );
-			mockDataReader.AddRow( table, 1 );
+
+			mockDataReader.AddRow( table, 1, 1 );
 
 			mockDataReader.AddRow( contentTable, 1, "Name1" );
 			mockDataReader.AddRow( contentTable, 2, "Name2" );
@@ -297,7 +255,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 						new KeyValuePair<object, object>( condition, destination )
 					}
 				}
-			} );
+			}, new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
 
 			Assert.AreEqual( 2, result.TestContentDictionary.Count );
 			Assert.AreEqual( "Name1", result.TestContentDictionary[ 1 ] );
@@ -309,16 +267,14 @@ namespace SqlObjectHydrator.Test.ILEmitting
 		{
 			var classMapResult = new ClassMapResult
 			{
-				ClassMaps = new List<ClassMap>
+				Mappings = new Mapping
 				{
-					new ClassMap( typeof( TestClass ), 0 )
-				},
-				Mappings = new Mapping()
+					TableMaps = new Dictionary<int, Type>
+					{
+						{ 0, typeof( TestClass ) }
+					}
+				}
 			};
-
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "Name1" ), 0 ) );
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "Name2" ), 1 ) );
-			classMapResult.ClassMaps[ 0 ].Properties.Add( new PropertyMap( typeof( TestClass ).GetProperty( "Length1" ), 2 ) );
 
 			var mockDataReader = new MockDataReader();
 			var table = mockDataReader.AddTable( "Name1", "Name 2", "Length1" );
@@ -327,11 +283,161 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<List<TestClass>>( new MockDataReader(), classMapResult );
 
-			var result = func( mockDataReader, new Dictionary<MappingEnum, object>() );
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
 
-			Assert.AreEqual( "Name 1", result[0].Name1 );
-			Assert.AreEqual( null, result[0].Name2 );
-			Assert.AreEqual( 1, result[0].Length1 );
+			Assert.AreEqual( "Name 1", result[ 0 ].Name1 );
+			Assert.AreEqual( null, result[ 0 ].Name2 );
+			Assert.AreEqual( 1, result[ 0 ].Length1 );
 		}
+
+		[Test]
+		public void GenerateToObject_WhenCalledWithVariableTableType_UsesCorrectType()
+		{
+			IMapping mapping = new Mapping();
+
+			Func<Result, BaseScore, bool> canJoin = ( r, b ) => r.Id == b.ResultId;
+			Action<Result, List<BaseScore>> listSet = ( r, b ) => r.Scores = b;
+			Func<IDataRecord, Type> variableTableType = dataRecord =>
+			{
+				switch ( dataRecord.GetInt32( 4 ) )
+				{
+					case 1:
+						return typeof( IntScore );
+					default:
+						return typeof( StringScore );
+				}
+			};
+
+			mapping.TableJoin<Result, BaseScore>( canJoin, listSet );
+			mapping.VariableTableType<BaseScore>( variableTableType );
+
+			mapping.Table<Result>( 0 );
+			mapping.Table<BaseScore>( 1 );
+
+			var classMapResult = new ClassMapResult
+			{
+				Mappings = (Mapping)mapping
+			};
+
+			var mockDataReader = new MockDataReader();
+
+			var results = mockDataReader.AddTable( "Id", "Name" );
+			var scores = mockDataReader.AddTable( "Id", "ResultId", "Value", "ValueString", "ResultType" );
+
+			mockDataReader.AddRow( results, 1, "Result 1" );
+			mockDataReader.AddRow( results, 2, "Result 2" );
+
+			mockDataReader.AddRow( scores, 1, 1, 10, "", 1 );
+			mockDataReader.AddRow( scores, 1, 2, DBNull.Value, "10", 2 );
+
+			var func = MappingGenerator.Generate<List<Result>>( new MockDataReader(), classMapResult );
+
+			var dictionary = new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
+
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>
+			{
+				{
+					MappingEnum.TableJoin, new List<KeyValuePair<object, object>>
+					{
+						new KeyValuePair<object, object>( canJoin, listSet )
+					}
+				},
+				{
+					MappingEnum.VariableTableType, new Dictionary<Type, object>
+					{
+						{ typeof( BaseScore ), variableTableType }
+					}
+				}
+			}, dictionary );
+
+			Assert.AreEqual( 1, result[ 0 ].Id );
+			Assert.AreEqual( 2, result[ 1 ].Id );
+
+			Assert.AreEqual( 1, result[ 0 ].Scores.Count );
+			Assert.AreEqual( 1, result[ 1 ].Scores.Count );
+
+			Assert.IsInstanceOf<IntScore>( result[ 0 ].Scores[ 0 ] );
+			Assert.IsInstanceOf<StringScore>( result[ 1 ].Scores[ 0 ] );
+
+			Assert.AreEqual( 10, ( result[ 0 ].Scores[ 0 ] as IntScore ).Value );
+			Assert.AreEqual( "10", ( result[ 1 ].Scores[ 0 ] as StringScore ).ValueString );
+		}
+
+		[Test]
+		public void GenerateToObject_WhenCalledWithVariableTableTypeAndPropertyMap_UsesPropertyMap()
+		{
+			IMapping mapping = new Mapping();
+
+			Func<IDataRecord, Type> variableTableType = dataRecord => typeof( StringScore );
+
+			mapping.VariableTableType<BaseScore>( variableTableType );
+			Func<IDataRecord, string> action = dataRecord => "The Score Is: " + dataRecord.GetString( 2 );
+			mapping.PropertyMap<StringScore, String>( x => x.ValueString, action );
+
+			mapping.Table<BaseScore>( 0 );
+
+			var classMapResult = new ClassMapResult
+			{
+				Mappings = (Mapping)mapping
+			};
+
+			var mockDataReader = new MockDataReader();
+
+			var scores = mockDataReader.AddTable( "Id", "ResultId", "ValueString", "ResultType" );
+
+			mockDataReader.AddRow( scores, 1, 1, "10", 2 );
+
+			var func = MappingGenerator.Generate<List<BaseScore>>( new MockDataReader(), classMapResult );
+
+			var dictionary = new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
+
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>
+			{
+				{
+					MappingEnum.VariableTableType, new Dictionary<Type, object>
+					{
+						{ typeof( BaseScore ), variableTableType }
+					}
+				},
+				{
+					MappingEnum.PropertyMap, new Dictionary<PropertyInfo, object>
+					{
+						{
+							typeof( StringScore ).GetProperty( "ValueString" ), action
+						}
+					}
+				}
+			}, dictionary );
+
+			Assert.AreEqual( 1, result[ 0 ].Id );
+
+			Assert.IsInstanceOf<StringScore>( result[ 0 ] );
+
+			Assert.AreEqual( "The Score Is: 10", ( result[ 0 ] as StringScore ).ValueString );
+		}
+	}
+
+	public class Result
+	{
+		public int Id { get; set; }
+		public string Name { get; set; }
+		public List<BaseScore> Scores { get; set; }
+	}
+
+	public class BaseScore
+	{
+		public int Id { get; set; }
+		public int ResultId { get; set; }
+		public int ResultType { get; set; }
+	}
+
+	public class StringScore : BaseScore
+	{
+		public string ValueString { get; set; }
+	}
+
+	public class IntScore : BaseScore
+	{
+		public int Value { get; set; }
 	}
 }

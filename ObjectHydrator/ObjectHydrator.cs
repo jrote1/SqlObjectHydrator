@@ -28,7 +28,6 @@ namespace SqlObjectHydrator
 						var hashcode = CacheManager.GetReaderHashCode( dataReader );
 						var classMapResult = new ClassMapResult();
 						CacheManager.StoreMappingCache( () => GetMappingCache<T>( dataReader, configuration, out classMapResult ), dataReader, configuration );
-						dataReader = new TempDataReader( classMapResult.TempDataStorage, hashcode );
 					}
 				}
 			}
@@ -59,7 +58,7 @@ namespace SqlObjectHydrator
 					MappingEnum.TableJoin, mappings.TableJoins.Select( x => new KeyValuePair<object, object>( x.Value.Key, x.Value.Value ) ).ToList()
 				},
 				{
-					MappingEnum.PropertyMap, mappings.PropertyMaps.Select( x => x.Value.Value ).ToList()
+					MappingEnum.PropertyMap, mappings.PropertyMaps.ToDictionary( x=>x.Key,x=>x.Value.Value )
 				}
 			};
 		}

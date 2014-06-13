@@ -7,18 +7,20 @@ namespace SqlObjectHydrator.Caching
 {
 	internal class MappingCache<T>
 	{
-		public MappingCache( Func<IDataReader, Dictionary<MappingEnum, object>, T> func, Dictionary<MappingEnum, object> mappings )
+		public MappingCache( Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> func, Dictionary<MappingEnum, object> mappings )
 		{
 			Func = func;
 			Mappings = mappings;
+			TypeMaps = new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
 		}
 
-		private Func<IDataReader, Dictionary<MappingEnum, object>, T> Func { get; set; }
+		private Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> Func { get; set; }
 		private Dictionary<MappingEnum, object> Mappings { get; set; }
+		private Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> TypeMaps { get; set; }
 
 		public T Run( IDataReader dataReader )
 		{
-			return Func( dataReader, Mappings );
+			return Func( dataReader, Mappings, TypeMaps );
 		}
 	}
 }
