@@ -400,10 +400,10 @@ namespace SqlObjectHydrator.Test.ILEmitting
 					}
 				},
 				{
-					MappingEnum.PropertyMap, new Dictionary<PropertyInfo, object>
+					MappingEnum.PropertyMap, new Dictionary<PropertyInfo, PropertyMap>
 					{
 						{
-							typeof( StringScore ).GetProperty( "ValueString" ), action
+							typeof( StringScore ).GetProperty( "ValueString" ), new PropertyMap( action )
 						}
 					}
 				}
@@ -414,6 +414,84 @@ namespace SqlObjectHydrator.Test.ILEmitting
 			Assert.IsInstanceOf<StringScore>( result[ 0 ] );
 
 			Assert.AreEqual( "The Score Is: 10", ( result[ 0 ] as StringScore ).ValueString );
+		}
+
+		[Test]
+		public void GenerateToObject_WhenCalledWithPropertyMapColumnId_ReturnsCorrectData()
+		{
+			IMapping mapping = new Mapping();
+
+			mapping.Table<TestClass>( 0 );
+			mapping.PropertyMap<TestClass>( x => x.Name1, 0 );
+
+			var classMapResult = new ClassMapResult
+			{
+				Mappings = (Mapping)mapping
+			};
+
+			var mockDataReader = new MockDataReader();
+
+			var scores = mockDataReader.AddTable( "Name" );
+
+			string expectedName = "The name";
+			mockDataReader.AddRow( scores, expectedName );
+
+			var func = MappingGenerator.Generate<List<TestClass>>( new MockDataReader(), classMapResult );
+
+			var dictionary = new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
+
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>
+			{
+				{
+					MappingEnum.PropertyMap, new Dictionary<PropertyInfo, PropertyMap>
+					{
+						{
+							typeof( TestClass ).GetProperty( "Name1" ), new PropertyMap( 0 )
+						}
+					}
+				}
+			}, dictionary );
+
+			Assert.AreEqual( expectedName, result[ 0 ].Name1 );
+		}
+
+		[Test]
+		public void GenerateToObject_WhenCalledWithPropertyMapColumnName_ReturnsCorrectData()
+		{
+			IMapping mapping = new Mapping();
+
+			mapping.Table<TestClass>( 0 );
+			mapping.PropertyMap<TestClass>( x => x.Name1, "Name" );
+
+			var classMapResult = new ClassMapResult
+			{
+				Mappings = (Mapping)mapping
+			};
+
+			var mockDataReader = new MockDataReader();
+
+			var scores = mockDataReader.AddTable( "Name" );
+
+			string expectedName = "The name";
+			mockDataReader.AddRow( scores, expectedName );
+
+			var func = MappingGenerator.Generate<List<TestClass>>( new MockDataReader(), classMapResult );
+
+			var dictionary = new Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
+
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>
+			{
+				{
+					MappingEnum.PropertyMap, new Dictionary<PropertyInfo, PropertyMap>
+					{
+						{
+							typeof( TestClass ).GetProperty( "Name1" ), new PropertyMap( "Name" )
+						}
+					}
+				}
+			}, dictionary );
+
+			Assert.AreEqual( expectedName, result[ 0 ].Name1 );
 		}
 	}
 

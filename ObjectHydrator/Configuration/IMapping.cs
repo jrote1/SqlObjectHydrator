@@ -8,11 +8,13 @@ namespace SqlObjectHydrator.Configuration
 	public interface IMapping
 	{
 		void Table<T>( int id );
-		void PropertyMap<T,TResult>(Expression<Func<T,TResult>> property, Func<IDataRecord,TResult> setAction );
+		void PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, Func<IDataRecord, TResult> setAction );
+		void PropertyMap<T>( Expression<Func<T, object>> property, string columnName );
+		void PropertyMap<T>( Expression<Func<T, object>> property, int columnId );
 		void TableJoin<TParent, TChild>( Func<TParent, TChild, bool> canJoin, Action<TParent, List<TChild>> listSet );
 		void Join<TParent, TChild>( Action<TParent, List<TChild>> listSet );
 		void AddJoin( Func<ITableJoin, ITableJoinMap> func );
-		void VariableTableType<T>( Func<IDataRecord,Type> action );
+		void VariableTableType<T>( Func<IDataRecord, Type> action );
 	}
 
 	public interface ITableJoin
@@ -22,7 +24,7 @@ namespace SqlObjectHydrator.Configuration
 
 	public interface IDictionaryJoinCondition<T> where T : new()
 	{
-		IDictionaryKeyColumn<T> Condition(  Func<T, dynamic, bool> condition );
+		IDictionaryKeyColumn<T> Condition( Func<T, dynamic, bool> condition );
 	}
 
 	public interface IDictionaryKeyColumn<T> where T : new()
