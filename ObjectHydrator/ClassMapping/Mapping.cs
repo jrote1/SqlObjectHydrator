@@ -11,7 +11,7 @@ namespace SqlObjectHydrator.ClassMapping
 {
 	internal class Mapping : IMapping
 	{
-		internal List<KeyValuePair<PropertyInfo, KeyValuePair<Type, object>>> PropertyMaps { get; set; }
+		public Dictionary<PropertyInfo, PropertyMap> PropertyMaps { get; set; }
 		public Dictionary<int, Type> TableMaps { get; set; }
 		public List<DictionaryTableJoin> DictionaryTableJoins { get; set; }
 		public Dictionary<KeyValuePair<Type, Type>, KeyValuePair<object, object>> TableJoins { get; set; }
@@ -20,7 +20,7 @@ namespace SqlObjectHydrator.ClassMapping
 
 		public Mapping()
 		{
-			PropertyMaps = new List<KeyValuePair<PropertyInfo, KeyValuePair<Type, object>>>();
+			PropertyMaps = new Dictionary<PropertyInfo, PropertyMap>();
 			TableMaps = new Dictionary<int, Type>();
 			DictionaryTableJoins = new List<DictionaryTableJoin>();
 			TableJoins = new Dictionary<KeyValuePair<Type, Type>, KeyValuePair<object, object>>();
@@ -35,7 +35,17 @@ namespace SqlObjectHydrator.ClassMapping
 
 		void IMapping.PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, Func<IDataRecord, TResult> setAction )
 		{
-			PropertyMaps.Add( new KeyValuePair<PropertyInfo, KeyValuePair<Type, object>>( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new KeyValuePair<Type, object>( typeof( T ), setAction ) ) );
+			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( setAction ) );
+		}
+
+		public void PropertyMap<T>( Expression<Func<T, object>> property, string columnName )
+		{
+			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( columnName ) );
+		}
+
+		public void PropertyMap<T>( Expression<Func<T, object>> property, int columnId )
+		{
+			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( columnId ) );
 		}
 
 		private static PropertyInfo GetPropertyInfo<T>( string name )

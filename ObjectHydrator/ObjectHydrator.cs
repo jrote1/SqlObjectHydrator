@@ -58,7 +58,7 @@ namespace SqlObjectHydrator
 					MappingEnum.TableJoin, mappings.TableJoins.Select( x => new KeyValuePair<object, object>( x.Value.Key, x.Value.Value ) ).ToList()
 				},
 				{
-					MappingEnum.PropertyMap, mappings.PropertyMaps.ToDictionary( x=>x.Key,x=>x.Value.Value )
+					MappingEnum.PropertyMap, mappings.PropertyMaps
 				}
 			};
 		}

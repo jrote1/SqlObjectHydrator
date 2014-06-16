@@ -49,6 +49,8 @@
     <Compile Include="ClassMapping\ClassMapResult.cs" />
     <Compile Include="ClassMapping\Mapping.cs" />
     <Compile Include="ClassMapping\PropertyExtensionMethods.cs" />
+    <Compile Include="ClassMapping\PropertyMap.cs" />
+    <Compile Include="ClassMapping\PropertyMapType.cs" />
     <Compile Include="Configuration\DictionaryTableJoin.cs" />
     <Compile Include="Configuration\ExpressionGenerators\DynamicToDictionaryGenerator.cs" />
     <Compile Include="Configuration\IMapping.cs" />
