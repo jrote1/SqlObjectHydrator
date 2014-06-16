@@ -5,4 +5,4 @@
 SqlObjectHydrator
 =================
 
-An extremely fast library that maps IDataReaders to objects
+An extremely fast library that maps IDataReaders to objects with the ability to create custom configurations
