@@ -1,5 +1,5 @@
-<a href="http://buildserver.spawtz.com:8000/viewType.html?buildTypeId=SqlObjectHydrator_Master&guest=1">
-<img src="http://buildserver.spawtz.com:8000/app/rest/builds/buildType:(id:SqlObjectHydrator_Master)/statusIcon"/>
+<a href="http://buildserver.spawtz.com:8000/viewType.html?buildTypeId=SqlObjectHydrator_Ci&guest=1">
+<img src="http://buildserver.spawtz.com:8000/app/rest/builds/buildType:(id:SqlObjectHydrator_Ci)/statusIcon"/>
 </a>
 
 SqlObjectHydrator
