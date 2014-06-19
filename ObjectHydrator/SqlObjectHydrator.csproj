@@ -33,9 +33,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Pfz.TypeBuilding">
-      <HintPath>..\packages\Pfz.TypeBuilding.1.0.1\lib\net40-Client\Pfz.TypeBuilding.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.DataSetExtensions" />

@@ -14,7 +14,7 @@ namespace SqlObjectHydrator.ClassMapping
 		public Dictionary<PropertyInfo, PropertyMap> PropertyMaps { get; set; }
 		public Dictionary<int, Type> TableMaps { get; set; }
 		public List<DictionaryTableJoin> DictionaryTableJoins { get; set; }
-		public Dictionary<KeyValuePair<Type, Type>, KeyValuePair<object, object>> TableJoins { get; set; }
+		public List<TableJoinMap> TableJoins { get; set; }
 		public Dictionary<KeyValuePair<Type, Type>, object> Joins { get; set; }
 		public Dictionary<Type, object> VariableTableTypes { get; set; }
 
@@ -23,7 +23,7 @@ namespace SqlObjectHydrator.ClassMapping
 			PropertyMaps = new Dictionary<PropertyInfo, PropertyMap>();
 			TableMaps = new Dictionary<int, Type>();
 			DictionaryTableJoins = new List<DictionaryTableJoin>();
-			TableJoins = new Dictionary<KeyValuePair<Type, Type>, KeyValuePair<object, object>>();
+			TableJoins = new List<TableJoinMap>();
 			Joins = new Dictionary<KeyValuePair<Type, Type>, object>();
 			VariableTableTypes = new Dictionary<Type, object>();
 		}
@@ -38,12 +38,12 @@ namespace SqlObjectHydrator.ClassMapping
 			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( setAction ) );
 		}
 
-		public void PropertyMap<T>( Expression<Func<T, object>> property, string columnName )
+		public void PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, string columnName )
 		{
 			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( columnName ) );
 		}
 
-		public void PropertyMap<T>( Expression<Func<T, object>> property, int columnId )
+		public void PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, int columnId )
 		{
 			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( columnId ) );
 		}
@@ -56,7 +56,13 @@ namespace SqlObjectHydrator.ClassMapping
 
 		void IMapping.TableJoin<TParent, TChild>( Func<TParent, TChild, bool> canJoin, Action<TParent, List<TChild>> listSet )
 		{
-			TableJoins.Add( new KeyValuePair<Type, Type>( typeof( TParent ), typeof( TChild ) ), new KeyValuePair<object, object>( canJoin, listSet ) );
+			TableJoins.Add( new TableJoinMap
+			{
+				ChildType = typeof( TChild ),
+				ParentType = typeof( TParent ),
+				CanJoin = canJoin,
+				ListSet = listSet
+			} );
 		}
 
 		void IMapping.Join<TParent, TChild>( Action<TParent, List<TChild>> listSet )
@@ -79,6 +85,14 @@ namespace SqlObjectHydrator.ClassMapping
 		{
 			VariableTableTypes.Add( typeof( T ), action );
 		}
+	}
+
+	internal class TableJoinMap
+	{
+		public Type ParentType { get; set; }
+		public Type ChildType { get; set; }
+		public object CanJoin { get; set; }
+		public object ListSet { get; set; }
 	}
 
 	internal class TableJoin : ITableJoin

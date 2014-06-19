@@ -5,14 +5,15 @@ using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Pfz.TypeBuilding;
 using SqlObjectHydrator.ClassMapping;
 
 namespace SqlObjectHydrator.ILEmitting
 {
 	internal static class ObjectSettingEmitter
 	{
-		public static LocalBuilder Emit( ILGenerator emitter, Type type, Mapping mapping )
+		public static int TableId = 0;
+
+		public static LocalBuilder Emit( ILGenerator emitter, Type type, Mapping mapping, int tableId )
 		{
 			var listType = typeof( List<> ).MakeGenericType( type );
 			var resultLocalBuilder = emitter.DeclareLocal( listType );
@@ -74,8 +75,10 @@ namespace SqlObjectHydrator.ILEmitting
 			var endIf = emitter.DefineLabel();
 
 			emitter.Emit( OpCodes.Ldarg_2 );
+			emitter.Emit( OpCodes.Ldc_I4, tableId);
 			emitter.Emit( OpCodes.Ldloc, typeLocal );
-			emitter.Emit( OpCodes.Call, typeof( Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetMethod( "ContainsKey" ) );
+			emitter.Emit( OpCodes.Call, typeof( ObjectSettingEmitter ).GetMethod( "GetMappingCacheTuple" ) );
+			emitter.Emit( OpCodes.Call, typeof( Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetMethod( "ContainsKey" ) );
 			emitter.Emit( OpCodes.Brtrue, endIf );
 
 			var objectMethodLocal = emitter.DeclareLocal( typeof( Func<IDataRecord, Dictionary<MappingEnum, object>, object> ) );
@@ -87,15 +90,19 @@ namespace SqlObjectHydrator.ILEmitting
 			emitter.Emit( OpCodes.Stloc, objectMethodLocal );
 
 			emitter.Emit( OpCodes.Ldarg_2 );
+			emitter.Emit( OpCodes.Ldc_I4, tableId);
 			emitter.Emit( OpCodes.Ldloc, typeLocal );
+			emitter.Emit( OpCodes.Call, typeof( ObjectSettingEmitter ).GetMethod( "GetMappingCacheTuple" ) );
 			emitter.Emit( OpCodes.Ldloc, objectMethodLocal );
-			emitter.Emit( OpCodes.Call, typeof( Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetMethod( "Add" ) );
+			emitter.Emit( OpCodes.Call, typeof( Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetMethod( "Add" ) );
 
 			emitter.MarkLabel( endIf );
 
 			emitter.Emit( OpCodes.Ldarg_2 );
+			emitter.Emit( OpCodes.Ldc_I4, tableId);
 			emitter.Emit( OpCodes.Ldloc, typeLocal );
-			emitter.Emit( OpCodes.Call, typeof( Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetProperty( "Item" ).GetGetMethod() );
+			emitter.Emit( OpCodes.Call, typeof( ObjectSettingEmitter ).GetMethod( "GetMappingCacheTuple" ) );
+			emitter.Emit( OpCodes.Call, typeof( Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetProperty( "Item" ).GetGetMethod() );
 			emitter.Emit( OpCodes.Ldarg_0 );
 			emitter.Emit( OpCodes.Ldarg_1 );
 			emitter.Emit( OpCodes.Call, typeof( Func<IDataRecord, Dictionary<MappingEnum, object>, object> ).GetMethod( "Invoke" ) );
@@ -117,10 +124,15 @@ namespace SqlObjectHydrator.ILEmitting
 			return resultLocalBuilder;
 		}
 
+		public static Tuple<int, Type> GetMappingCacheTuple( int tableId, Type type )
+		{
+			return new Tuple<int, Type>( tableId, type );
+		}
+
 		public static Func<IDataRecord, Dictionary<MappingEnum, object>, object> GenerateObjectBuilder( Type type, IDataRecord dataRecord, Dictionary<MappingEnum, object> mappings )
 		{
 			var propertyMaps = mappings.ContainsKey( MappingEnum.PropertyMap ) ? mappings[ MappingEnum.PropertyMap ] as Dictionary<PropertyInfo, PropertyMap> : new Dictionary<PropertyInfo, PropertyMap>();
-			var filteredPropertyMaps = propertyMaps.Where( x => x.Key.DeclaringType == type ).ToList();
+			var filteredPropertyMaps = propertyMaps.Where( x => x.Key.DeclaringType.IsAssignableFrom( type ) ).ToList();
 
 			var method = new DynamicMethod( "", typeof( object ), new[]
 			{
@@ -179,6 +191,8 @@ namespace SqlObjectHydrator.ILEmitting
 						propertyInfo = filteredPropertyMaps.First( x => x.Value.ColumnId == i ).Key;
 					else if ( filteredPropertyMaps.Any( x => x.Value.PropertyMapType == PropertyMapType.ColumnName && x.Value.ColumnName == dataRecord.GetName( i ) ) )
 						propertyInfo = filteredPropertyMaps.First( x => x.Value.ColumnName == dataRecord.GetName( i ) ).Key;
+					else if ( filteredPropertyMaps.Any( x => x.Key.Name == dataRecord.GetName( i ) ) )
+						propertyInfo = null;
 					else
 						propertyInfo = type.GetProperty( dataRecord.GetName( i ) );
 					if ( propertyInfo != null && propertyInfo.GetActualPropertyType() == dataRecord.GetFieldType( i ) && filteredPropertyMaps.Where( x => x.Value.PropertyMapType == PropertyMapType.Func ).All( x => x.Key != propertyInfo ) )

@@ -55,10 +55,13 @@ namespace SqlObjectHydrator
 					MappingEnum.Join, mappings.Joins.Select( x => x.Value ).ToList()
 				},
 				{
-					MappingEnum.TableJoin, mappings.TableJoins.Select( x => new KeyValuePair<object, object>( x.Value.Key, x.Value.Value ) ).ToList()
+					MappingEnum.TableJoin, mappings.TableJoins
 				},
 				{
 					MappingEnum.PropertyMap, mappings.PropertyMaps
+				},
+				{
+					MappingEnum.VariableTableType, mappings.VariableTableTypes
 				}
 			};
 		}

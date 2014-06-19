@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using SqlObjectHydrator.Caching;
 using SqlObjectHydrator.Configuration;
@@ -47,11 +48,11 @@ namespace SqlObjectHydrator.Test
 			mapping.TableJoin<Product, ProductRating>( ( product, rating ) => product.Id == rating.ProductId, ( product, list ) => product.ProductRatings = list );
 			mapping.Join<RootTable, Product>( ( x, y ) => x.Products = y );
 			mapping.AddJoin( x => x.DictionaryTableJoin<Product>()
-			                       .Condition( ( product, o ) => product.Id == o.ProductId )
-			                       .KeyColumn( "Id" )
-			                       .ValueColumn( "Quantity" )
-			                       .SetDestinationProperty<int, int>( ( product, values ) => product.Stock = values )
-			                       .ChildTable( 2 ) );
+				.Condition( ( product, o ) => product.Id == o.ProductId )
+				.KeyColumn( "Id" )
+				.ValueColumn( "Quantity" )
+				.SetDestinationProperty<int, int>( ( product, values ) => product.Stock = values )
+				.ChildTable( 2 ) );
 		}
 	}
 
@@ -119,6 +120,127 @@ namespace SqlObjectHydrator.Test
 			Assert.AreEqual( 12, result[ 0 ].Score );
 			Assert.IsNull( result[ 1 ].Score );
 		}
+
+		[Test]
+		public void DataReaderToList_WithTwoTableJoinsForSameTable_JoinsTables()
+		{
+			var dataReader = new MockDataReader();
+			var rootTable = dataReader.AddTable( "HomeTeamId", "HomeTeamId1", "AwayTeamId" );
+			dataReader.AddRow( rootTable, DBNull.Value, 2, 1 );
+
+			var teamTable = dataReader.AddTable( "Id", "Name" );
+			dataReader.AddRow( teamTable, 1, "Team A" );
+			dataReader.AddRow( teamTable, 2, "Team B" );
+
+			var result = dataReader.DataReaderToList<Score>( typeof( ScoreConfiguration ) );
+
+			Assert.AreEqual( "Team A", result[ 0 ].AwayTeam.Name );
+			Assert.AreEqual( "Team B", result[ 0 ].HomeTeam.Name );
+		}
+
+		[Test]
+		public void DataReaderToList_WhenPropertyHasCorrosponingColmunButHasPropertyMap_OnlyUsesPropertyMap()
+		{
+			var dataReader = new MockDataReader();
+			var rootTable = dataReader.AddTable( "IdVal", "Id" );
+			dataReader.AddRow( rootTable, 1, 2 );
+			dataReader.AddRow( rootTable, 1, DBNull.Value );
+
+			var result = dataReader.DataReaderToList<PropertyMapTest>( typeof( PropertyMapTestConfiguration ) );
+		}
+
+		[Test]
+		public void DataReaderToList_WhenMultipleDictionaryJoins_DoesNotUseSameExpandoObjectMap()
+		{
+			var dataReader = new MockDataReader();
+			var rootTable = dataReader.AddTable( "Id" );
+			var users = dataReader.AddTable( "Key", "Value" );
+			var places = dataReader.AddTable( "Key", "Value" );
+
+			dataReader.AddRow( rootTable, 1 );
+
+			dataReader.AddRow( users, 1, "User 1" );
+
+			dataReader.AddRow( places, "Place 1", "Location" );
+
+			var result = dataReader.DataReaderToList<WhenMultipleDictionaryJoins>( typeof( WhenMultipleDictionaryJoinsConfiguration ) );
+		}
+	}
+
+
+	public class WhenMultipleDictionaryJoins
+	{
+		public int Id { get; set; }
+		public Dictionary<int, string> Users { get; set; }
+		public Dictionary<string, string> Places { get; set; }
+	}
+
+	public class WhenMultipleDictionaryJoinsConfiguration : IObjectHydratorConfiguration
+	{
+		public void Mapping( IMapping mapping )
+		{
+			mapping.Table<WhenMultipleDictionaryJoins>( 0 );
+
+			mapping.AddJoin( join =>
+				join.DictionaryTableJoin<WhenMultipleDictionaryJoins>()
+					.Condition( ( o, d ) => true )
+					.KeyColumn( "Key" )
+					.ValueColumn( "Value" )
+					.SetDestinationProperty<int, string>( ( o, d ) => o.Users = d )
+					.ChildTable( 1 ) );
+
+			mapping.AddJoin( join =>
+				join.DictionaryTableJoin<WhenMultipleDictionaryJoins>()
+					.Condition( ( o, d ) => true )
+					.KeyColumn( "Key" )
+					.ValueColumn( "Value" )
+					.SetDestinationProperty<string, string>( ( o, d ) => o.Places = d )
+					.ChildTable( 2 ) );
+		}
+	}
+
+	public class ScoreConfiguration : IObjectHydratorConfiguration
+	{
+		public void Mapping( IMapping mapping )
+		{
+			mapping.Table<Score>( 0 );
+			mapping.Table<Team>( 1 );
+
+			mapping.PropertyMap<Score, int>( x => x.HomeTeamId, "HomeTeamId1" );
+
+			mapping.TableJoin<Score, Team>( ( s, t ) => s.AwayTeamId == t.Id, ( s, t ) => s.AwayTeam = t.FirstOrDefault() );
+			mapping.TableJoin<Score, Team>( ( s, t ) => s.HomeTeamId == t.Id, ( s, t ) => s.HomeTeam = t.FirstOrDefault() );
+		}
+	}
+
+	public class PropertyMapTest
+	{
+		public int Id { get; set; }
+	}
+
+	public class PropertyMapTestConfiguration : IObjectHydratorConfiguration
+	{
+		public void Mapping( IMapping mapping )
+		{
+			mapping.Table<PropertyMapTest>( 0 );
+
+			mapping.PropertyMap<PropertyMapTest, int>( x => x.Id, "IdVal" );
+		}
+	}
+
+	public class Score
+	{
+		public int HomeTeamId { get; set; }
+		public int AwayTeamId { get; set; }
+
+		public Team HomeTeam { get; set; }
+		public Team AwayTeam { get; set; }
+	}
+
+	public class Team
+	{
+		public int Id { get; set; }
+		public string Name { get; set; }
 	}
 
 	public class NullableTest

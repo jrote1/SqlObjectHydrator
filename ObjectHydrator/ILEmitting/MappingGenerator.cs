@@ -17,7 +17,7 @@ namespace SqlObjectHydrator.ILEmitting
 			dataReader.NextResult();
 		}
 
-		public static Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> Generate<T>( IDataReader dataReader, ClassMapResult classMapResult ) where T : new()
+		public static Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> Generate<T>( IDataReader dataReader, ClassMapResult classMapResult ) where T : new()
 		{
 			var baseType = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) ) ? typeof( T ).GetGenericArguments()[ 0 ] : typeof( T );
 			var isList = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) );
@@ -28,7 +28,7 @@ namespace SqlObjectHydrator.ILEmitting
 			{
 				typeof( IDataReader ),
 				typeof( Dictionary<MappingEnum, object> ),
-				typeof( Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> )
+				typeof( Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> )
 			}, true );
 			var emitter = method.GetILGenerator();
 
@@ -41,13 +41,13 @@ namespace SqlObjectHydrator.ILEmitting
 			//var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name, assemblyName.Name +  ".dll");
 
 			//TypeBuilder builder = moduleBuilder.DefineType("Test", TypeAttributes.Public);
-			//var methodBuilder = builder.DefineMethod("DynamicCreate", MethodAttributes.Public, typeof(T), new[] { typeof( IDataReader ),typeof( Dictionary<MappingEnum, object> ) });
+			//var methodBuilder = builder.DefineMethod("DynamicCreate", MethodAttributes.Public, typeof(T), new[] { typeof( IDataReader ),typeof( Dictionary<MappingEnum, object> ),typeof( Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ) });
 			//var emitter = methodBuilder.GetILGenerator();
 
 			#endregion
 
 			//Create Func Variables
-			var tableJoinsLocalBuilders = new Dictionary<KeyValuePair<Type, Type>, KeyValuePair<LocalBuilder, LocalBuilder>>();
+			var tableJoinsLocalBuilders = new Dictionary<TableJoinMap, KeyValuePair<LocalBuilder, LocalBuilder>>();
 			var joinLocalBuilders = new Dictionary<KeyValuePair<Type, Type>, LocalBuilder>();
 			var dictionaryTableJoinsLocalBuilders = new Dictionary<KeyValuePair<Type, int>, KeyValuePair<LocalBuilder, LocalBuilder>>();
 
@@ -56,35 +56,36 @@ namespace SqlObjectHydrator.ILEmitting
 			if ( classMapResult.Mappings.TableJoins.Count > 0 )
 			{
 				var tableJoins = classMapResult.Mappings.TableJoins.ToList();
-				var tableJoinsLocal = emitter.DeclareLocal( typeof( List<KeyValuePair<object, object>> ) );
+				var tableJoinsLocal = emitter.DeclareLocal( typeof( List<TableJoinMap> ) );
 				emitter.Emit( OpCodes.Ldarg_1 );
 				emitter.Emit( OpCodes.Ldc_I4, (int)MappingEnum.TableJoin );
 				emitter.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
-				emitter.Emit( OpCodes.Castclass, typeof( List<KeyValuePair<object, object>> ) );
+				emitter.Emit( OpCodes.Castclass, typeof( List<TableJoinMap> ) );
 				emitter.Emit( OpCodes.Stloc, tableJoinsLocal );
 
 				foreach ( var tableJoin in classMapResult.Mappings.TableJoins )
 				{
-					var keyLocal = emitter.DeclareLocal( tableJoin.Value.Key.GetType() );
-					var valueLocal = emitter.DeclareLocal( tableJoin.Value.Value.GetType() );
+					var canJoinLocal = emitter.DeclareLocal( tableJoin.CanJoin.GetType() );
+					var listSetLocal = emitter.DeclareLocal( tableJoin.ListSet.GetType() );
 
-					var tempLocal = emitter.DeclareLocal( typeof( KeyValuePair<object, object> ) );
+					var tempLocal = emitter.DeclareLocal( typeof( TableJoinMap ) );
 
 					var index = tableJoins.IndexOf( tableJoin );
+
 					emitter.Emit( OpCodes.Ldloc, tableJoinsLocal );
 					emitter.Emit( OpCodes.Ldc_I4, index );
-					emitter.Emit( OpCodes.Call, typeof( List<KeyValuePair<object, object>> ).GetProperty( "Item" ).GetGetMethod() );
+					emitter.Emit( OpCodes.Call, typeof( List<TableJoinMap> ).GetProperty( "Item" ).GetGetMethod() );
 					emitter.Emit( OpCodes.Stloc, tempLocal );
 					emitter.Emit( OpCodes.Ldloc, tempLocal );
-					emitter.Emit( OpCodes.Ldfld, typeof( KeyValuePair<object, object> ).GetField( "key", BindingFlags.Instance | BindingFlags.NonPublic ) );
-					emitter.Emit( OpCodes.Castclass, tableJoin.Value.Key.GetType() );
-					emitter.Emit( OpCodes.Stloc, keyLocal );
+					emitter.Emit( OpCodes.Call, typeof( TableJoinMap ).GetProperty( "CanJoin" ).GetGetMethod() );
+					emitter.Emit( OpCodes.Castclass, tableJoin.CanJoin.GetType() );
+					emitter.Emit( OpCodes.Stloc, canJoinLocal );
 					emitter.Emit( OpCodes.Ldloc, tempLocal );
-					emitter.Emit( OpCodes.Ldfld, typeof( KeyValuePair<object, object> ).GetField( "value", BindingFlags.Instance | BindingFlags.NonPublic ) );
-					emitter.Emit( OpCodes.Castclass, tableJoin.Value.Value.GetType() );
-					emitter.Emit( OpCodes.Stloc, valueLocal );
+					emitter.Emit( OpCodes.Call, typeof( TableJoinMap ).GetProperty( "ListSet" ).GetGetMethod() );
+					emitter.Emit( OpCodes.Castclass, tableJoin.ListSet.GetType() );
+					emitter.Emit( OpCodes.Stloc, listSetLocal );
 
-					tableJoinsLocalBuilders.Add( tableJoin.Key, new KeyValuePair<LocalBuilder, LocalBuilder>( keyLocal, valueLocal ) );
+					tableJoinsLocalBuilders.Add( tableJoin, new KeyValuePair<LocalBuilder, LocalBuilder>( canJoinLocal, listSetLocal ) );
 				}
 			}
 
@@ -163,7 +164,7 @@ namespace SqlObjectHydrator.ILEmitting
 				
 				var type = classMapResult.Mappings.TableMaps[ i ];
 
-				var localBuilder = ObjectSettingEmitter.Emit( emitter, type, classMapResult.Mappings );
+				var localBuilder = ObjectSettingEmitter.Emit( emitter, type, classMapResult.Mappings, i );
 				localBuilders.Add( new KeyValuePair<Type, int>( type, i ), localBuilder );
 				emitter.Emit( OpCodes.Ldarg_0 );
 				emitter.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "NextResult" ) );
@@ -173,8 +174,8 @@ namespace SqlObjectHydrator.ILEmitting
 
 			foreach ( var tableJoinsLocalBuilder in tableJoinsLocalBuilders )
 			{
-				var parentType = tableJoinsLocalBuilder.Key.Key;
-				var childType = tableJoinsLocalBuilder.Key.Value;
+				var parentType = tableJoinsLocalBuilder.Key.ParentType;
+				var childType = tableJoinsLocalBuilder.Key.ChildType;
 
 				emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Key == parentType ).Value );
 				emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Key == childType ).Value );
@@ -223,7 +224,7 @@ namespace SqlObjectHydrator.ILEmitting
 
 			#region working dynamicmethod
 
-			return (Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> ) );
+			return (Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> ) );
 
 			#endregion
 		}
