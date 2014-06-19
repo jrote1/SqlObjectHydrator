@@ -209,7 +209,7 @@ namespace SqlObjectHydrator.Test.ClassMapping
 				throw new ArgumentOutOfRangeException( "i", "No Tables" );
 			if ( _currentRow == -1 )
 				throw new ArgumentOutOfRangeException( "i", "Call Read First" );
-			return _tablesValues[ _currentTable ][ _currentRow ][ i ] == null;
+			return _tablesValues[ _currentTable ][ _currentRow ][ i ] == null || _tablesValues[_currentTable][_currentRow][i] == DBNull.Value;
 		}
 
 		public int FieldCount

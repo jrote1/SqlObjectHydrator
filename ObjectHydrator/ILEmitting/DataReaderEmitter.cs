@@ -19,9 +19,7 @@ namespace SqlObjectHydrator.ILEmitting
 				var ifNotNull = emitter.DefineLabel();
 				emitter.Emit( OpCodes.Ldarg_0 );
 				emitter.Emit( OpCodes.Ldc_I4, fieldId );
-				emitter.Emit( OpCodes.Callvirt, typeof( IDataRecord ).GetMethod( "GetValue" ) );
-				emitter.Emit( OpCodes.Ldsfld, typeof( DBNull ).GetField( "Value" ) );
-				emitter.Emit( OpCodes.Ceq );
+				emitter.Emit( OpCodes.Callvirt, typeof( IDataRecord ).GetMethod("IsDBNull") );
 				emitter.Emit( OpCodes.Brtrue, ifNotNull );
 
 				emitter.Emit( OpCodes.Ldarg_0 );
