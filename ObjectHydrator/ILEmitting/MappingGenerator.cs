@@ -17,7 +17,7 @@ namespace SqlObjectHydrator.ILEmitting
 			dataReader.NextResult();
 		}
 
-		public static Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> Generate<T>( IDataReader dataReader, ClassMapResult classMapResult ) where T : new()
+		public static Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<int,Dictionary<Type, object>>, T> Generate<T>( IDataReader dataReader, ClassMapResult classMapResult ) where T : new()
 		{
 			var baseType = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) ) ? typeof( T ).GetGenericArguments()[ 0 ] : typeof( T );
 			var isList = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) );
@@ -28,7 +28,7 @@ namespace SqlObjectHydrator.ILEmitting
 			{
 				typeof( IDataReader ),
 				typeof( Dictionary<MappingEnum, object> ),
-				typeof( Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> )
+				typeof( Dictionary<int,Dictionary<Type,object>> )
 			}, true );
 			var emitter = method.GetILGenerator();
 
@@ -224,7 +224,7 @@ namespace SqlObjectHydrator.ILEmitting
 
 			#region working dynamicmethod
 
-			return (Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> ) );
+			return (Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<int,Dictionary<Type, object>>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<int, Dictionary<Type,object>>, T> ) );
 
 			#endregion
 		}

@@ -52,7 +52,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var result = MappingGenerator.Generate<TestClass>( new MockDataReader(), classMapResult );
 
-			result( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
+			result( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<int, Dictionary<Type,object>>());
 		}
 
 		[Test]
@@ -75,7 +75,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<TestClass>( new MockDataReader(), classMapResult );
 
-			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
+			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<int, Dictionary<Type,object>>() );
 
 			Assert.AreEqual( "Name 1", result.Name1 );
 			Assert.AreEqual( null, result.Name2 );
@@ -102,7 +102,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<TestClass>( new MockDataReader(), classMapResult );
 
-			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
+            var result = func(mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<int, Dictionary<Type, object>>());
 
 			Assert.AreEqual( null, result.Length2 );
 		}
@@ -127,7 +127,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<TestClass>( new MockDataReader(), classMapResult );
 
-			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
+            var result = func(mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<int, Dictionary<Type, object>>());
 
 			Assert.AreEqual( 1, result.Length2 );
 		}
@@ -173,7 +173,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 						}
 					}
 				}
-			}, new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
+			}, new Dictionary<int, Dictionary<Type, object>>());
 
 			Assert.AreEqual( 1, result.TestContents.Count );
 			Assert.AreEqual( "Name1", result.TestContents[ 0 ].Name );
@@ -212,7 +212,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 						listSet
 					}
 				}
-			}, new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
+			}, new Dictionary<int, Dictionary<Type, object>>());
 
 			Assert.AreEqual( 2, result.TestContents.Count );
 			Assert.AreEqual( "Name1", result.TestContents[ 0 ].Name );
@@ -259,7 +259,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 						new KeyValuePair<object, object>( condition, destination )
 					}
 				}
-			}, new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
+			}, new Dictionary<int, Dictionary<Type,object>>() );
 
 			Assert.AreEqual( 2, result.TestContentDictionary.Count );
 			Assert.AreEqual( "Name1", result.TestContentDictionary[ 1 ] );
@@ -287,7 +287,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<List<TestClass>>( new MockDataReader(), classMapResult );
 
-			var result = func( mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>() );
+            var result = func(mockDataReader, new Dictionary<MappingEnum, object>(), new Dictionary<int, Dictionary<Type, object>>());
 
 			Assert.AreEqual( "Name 1", result[ 0 ].Name1 );
 			Assert.AreEqual( null, result[ 0 ].Name2 );
@@ -336,7 +336,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<List<Result>>( new MockDataReader(), classMapResult );
 
-			var dictionary = new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
+            var dictionary = new Dictionary<int, Dictionary<Type, object>>();
 
 			var result = func( mockDataReader, new Dictionary<MappingEnum, object>
 			{
@@ -397,7 +397,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<List<BaseScore>>( new MockDataReader(), classMapResult );
 
-			var dictionary = new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
+            var dictionary = new Dictionary<int, Dictionary<Type, object>>();
 
 			var result = func( mockDataReader, new Dictionary<MappingEnum, object>
 			{
@@ -446,7 +446,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<List<TestClass>>( new MockDataReader(), classMapResult );
 
-			var dictionary = new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
+            var dictionary = new Dictionary<int, Dictionary<Type, object>>();
 
 			var result = func( mockDataReader, new Dictionary<MappingEnum, object>
 			{
@@ -485,7 +485,7 @@ namespace SqlObjectHydrator.Test.ILEmitting
 
 			var func = MappingGenerator.Generate<List<TestClass>>( new MockDataReader(), classMapResult );
 
-			var dictionary = new Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>();
+            var dictionary = new Dictionary<int, Dictionary<Type, object>>();
 
 			var result = func( mockDataReader, new Dictionary<MappingEnum, object>
 			{
