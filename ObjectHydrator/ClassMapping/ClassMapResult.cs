@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace SqlObjectHydrator.ClassMapping
 {
@@ -6,10 +6,11 @@ namespace SqlObjectHydrator.ClassMapping
 	{
 		public ClassMapResult()
 		{
-			TempDataStorage = new List<List<Dictionary<int, object>>>();
+			this.TempDataStorage = new List<List<Dictionary<int, object>>>();
 		}
 
 		public List<List<Dictionary<int, object>>> TempDataStorage { get; private set; }
+
 		public Mapping Mappings { get; set; }
 	}
 }

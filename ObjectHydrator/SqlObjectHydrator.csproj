@@ -1,19 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--Project was exported from assembly: D:\SqlObjectHydratorInvestigation\FromPackages\SqlObjectHydrator.dll-->
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D47C95BD-9313-40DC-B0DC-B7C04A8E9E43}</ProjectGuid>
+    <ProjectGuid>{445867D9-CE1F-43EE-9AF0-ECE0D86713CF}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SqlObjectHydrator</RootNamespace>
     <AssemblyName>SqlObjectHydrator</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <ApplicationVersion>2.3.5.0</ApplicationVersion>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>SqlObjectHydrator</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -21,52 +22,51 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ObjectHydrator.cs" />
+    <Compile Include="FuncMappingsGenerator.cs" />
     <Compile Include="Caching\CacheManager.cs" />
     <Compile Include="Caching\MappingCache.cs" />
     <Compile Include="ClassMapping\ClassMapGenerator.cs" />
     <Compile Include="ClassMapping\ClassMapResult.cs" />
     <Compile Include="ClassMapping\Mapping.cs" />
+    <Compile Include="ClassMapping\TableJoinMap.cs" />
+    <Compile Include="ClassMapping\TableJoin.cs" />
     <Compile Include="ClassMapping\PropertyExtensionMethods.cs" />
     <Compile Include="ClassMapping\PropertyMap.cs" />
     <Compile Include="ClassMapping\PropertyMapType.cs" />
-    <Compile Include="Configuration\DictionaryTableJoin.cs" />
-    <Compile Include="Configuration\ExpressionGenerators\DynamicToDictionaryGenerator.cs" />
     <Compile Include="Configuration\IMapping.cs" />
-    <Compile Include="Configuration\IObjectHydratorConfiguration.cs" />
+    <Compile Include="Configuration\ITableJoin.cs" />
     <Compile Include="Configuration\ITableJoinMap.cs" />
+    <Compile Include="Configuration\DictionaryTableJoin.cs" />
+    <Compile Include="Configuration\DictionaryTableJoin`1.cs" />
+    <Compile Include="Configuration\IDictionaryJoinCondition.cs" />
+    <Compile Include="Configuration\IDictionaryKeyColumn.cs" />
+    <Compile Include="Configuration\IDictionaryValueColumn.cs" />
+    <Compile Include="Configuration\IDictionaryDestinationProperty.cs" />
+    <Compile Include="Configuration\IDictionaryChildTable.cs" />
+    <Compile Include="Configuration\IObjectHydratorConfiguration.cs" />
+    <Compile Include="Configuration\ExpressionGenerators\DynamicToDictionaryGenerator.cs" />
     <Compile Include="ILEmitting\DataReaderEmitter.cs" />
     <Compile Include="ILEmitting\ExpandoObjectInteractor.cs" />
     <Compile Include="ILEmitting\MappingEnum.cs" />
     <Compile Include="ILEmitting\MappingGenerator.cs" />
     <Compile Include="ILEmitting\ObjectSettingEmitter.cs" />
-    <Compile Include="ObjectHydrator.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

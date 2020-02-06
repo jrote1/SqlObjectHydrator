@@ -1,12 +1,13 @@
-﻿using System;
+﻿using SqlObjectHydrator.ClassMapping;
+using SqlObjectHydrator.Configuration;
+using SqlObjectHydrator.Configuration.ExpressionGenerators;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using SqlObjectHydrator.ClassMapping;
-using SqlObjectHydrator.Configuration.ExpressionGenerators;
 
 namespace SqlObjectHydrator.ILEmitting
 {
@@ -17,226 +18,175 @@ namespace SqlObjectHydrator.ILEmitting
 			dataReader.NextResult();
 		}
 
-		public static Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> Generate<T>( IDataReader dataReader, ClassMapResult classMapResult ) where T : new()
+		public static Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> Generate<T>(
+		  IDataReader dataReader,
+		  ClassMapResult classMapResult )
+		  where T : new()
 		{
-			var baseType = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) ) ? typeof( T ).GetGenericArguments()[ 0 ] : typeof( T );
-			var isList = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) );
-
-			#region working dynamicmethod
-
-			var method = new DynamicMethod( "", typeof( T ), new[]
+			Type baseType = !typeof( T ).IsGenericType || !( typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) ) ? typeof( T ) : typeof( T ).GetGenericArguments()[ 0 ];
+			bool flag = typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> );
+			DynamicMethod dynamicMethod = new DynamicMethod( "", typeof( T ), new Type[ 3 ]
 			{
-				typeof( IDataReader ),
-				typeof( Dictionary<MappingEnum, object> ),
-				typeof( Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> )
+		typeof (IDataReader),
+		typeof (Dictionary<MappingEnum, object>),
+		typeof (Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>)
 			}, true );
-			var emitter = method.GetILGenerator();
-
-			#endregion
-
-			#region dynamicmethod that outputs dll
-
-			//var assemblyName = new AssemblyName("SomeName");
-			//var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndSave, @"d:\");
-			//var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name, assemblyName.Name +  ".dll");
-
-			//TypeBuilder builder = moduleBuilder.DefineType("Test", TypeAttributes.Public);
-			//var methodBuilder = builder.DefineMethod("DynamicCreate", MethodAttributes.Public, typeof(T), new[] { typeof( IDataReader ),typeof( Dictionary<MappingEnum, object> ),typeof( Dictionary<Type, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ) });
-			//var emitter = methodBuilder.GetILGenerator();
-
-			#endregion
-
-			//Create Func Variables
-			var tableJoinsLocalBuilders = new Dictionary<TableJoinMap, KeyValuePair<LocalBuilder, LocalBuilder>>();
-			var joinLocalBuilders = new Dictionary<KeyValuePair<Type, Type>, LocalBuilder>();
-			var dictionaryTableJoinsLocalBuilders = new Dictionary<KeyValuePair<Type, int>, KeyValuePair<LocalBuilder, LocalBuilder>>();
-
-			#region Populate Mapping Variables
-
+			ILGenerator ilGenerator = dynamicMethod.GetILGenerator();
+			Dictionary<TableJoinMap, KeyValuePair<LocalBuilder, LocalBuilder>> dictionary1 = new Dictionary<TableJoinMap, KeyValuePair<LocalBuilder, LocalBuilder>>();
+			Dictionary<KeyValuePair<Type, Type>, LocalBuilder> dictionary2 = new Dictionary<KeyValuePair<Type, Type>, LocalBuilder>();
+			Dictionary<KeyValuePair<Type, int>, KeyValuePair<LocalBuilder, LocalBuilder>> dictionary3 = new Dictionary<KeyValuePair<Type, int>, KeyValuePair<LocalBuilder, LocalBuilder>>();
 			if ( classMapResult.Mappings.TableJoins.Count > 0 )
 			{
-				var tableJoins = classMapResult.Mappings.TableJoins.ToList();
-				var tableJoinsLocal = emitter.DeclareLocal( typeof( List<TableJoinMap> ) );
-				emitter.Emit( OpCodes.Ldarg_1 );
-				emitter.Emit( OpCodes.Ldc_I4, (int)MappingEnum.TableJoin );
-				emitter.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
-				emitter.Emit( OpCodes.Castclass, typeof( List<TableJoinMap> ) );
-				emitter.Emit( OpCodes.Stloc, tableJoinsLocal );
-
-				foreach ( var tableJoin in classMapResult.Mappings.TableJoins )
+				List<TableJoinMap> list = classMapResult.Mappings.TableJoins.ToList<TableJoinMap>();
+				LocalBuilder local1 = ilGenerator.DeclareLocal( typeof( List<TableJoinMap> ) );
+				ilGenerator.Emit( OpCodes.Ldarg_1 );
+				ilGenerator.Emit( OpCodes.Ldc_I4, 0 );
+				ilGenerator.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
+				ilGenerator.Emit( OpCodes.Castclass, typeof( List<TableJoinMap> ) );
+				ilGenerator.Emit( OpCodes.Stloc, local1 );
+				foreach ( TableJoinMap tableJoin in classMapResult.Mappings.TableJoins )
 				{
-					var canJoinLocal = emitter.DeclareLocal( tableJoin.CanJoin.GetType() );
-					var listSetLocal = emitter.DeclareLocal( tableJoin.ListSet.GetType() );
-
-					var tempLocal = emitter.DeclareLocal( typeof( TableJoinMap ) );
-
-					var index = tableJoins.IndexOf( tableJoin );
-
-					emitter.Emit( OpCodes.Ldloc, tableJoinsLocal );
-					emitter.Emit( OpCodes.Ldc_I4, index );
-					emitter.Emit( OpCodes.Call, typeof( List<TableJoinMap> ).GetProperty( "Item" ).GetGetMethod() );
-					emitter.Emit( OpCodes.Stloc, tempLocal );
-					emitter.Emit( OpCodes.Ldloc, tempLocal );
-					emitter.Emit( OpCodes.Call, typeof( TableJoinMap ).GetProperty( "CanJoin" ).GetGetMethod() );
-					emitter.Emit( OpCodes.Castclass, tableJoin.CanJoin.GetType() );
-					emitter.Emit( OpCodes.Stloc, canJoinLocal );
-					emitter.Emit( OpCodes.Ldloc, tempLocal );
-					emitter.Emit( OpCodes.Call, typeof( TableJoinMap ).GetProperty( "ListSet" ).GetGetMethod() );
-					emitter.Emit( OpCodes.Castclass, tableJoin.ListSet.GetType() );
-					emitter.Emit( OpCodes.Stloc, listSetLocal );
-
-					tableJoinsLocalBuilders.Add( tableJoin, new KeyValuePair<LocalBuilder, LocalBuilder>( canJoinLocal, listSetLocal ) );
+					LocalBuilder localBuilder = ilGenerator.DeclareLocal( tableJoin.CanJoin.GetType() );
+					LocalBuilder local2 = ilGenerator.DeclareLocal( tableJoin.ListSet.GetType() );
+					LocalBuilder local3 = ilGenerator.DeclareLocal( typeof( TableJoinMap ) );
+					int num = list.IndexOf( tableJoin );
+					ilGenerator.Emit( OpCodes.Ldloc, local1 );
+					ilGenerator.Emit( OpCodes.Ldc_I4, num );
+					ilGenerator.Emit( OpCodes.Call, typeof( List<TableJoinMap> ).GetProperty( "Item" ).GetGetMethod() );
+					ilGenerator.Emit( OpCodes.Stloc, local3 );
+					ilGenerator.Emit( OpCodes.Ldloc, local3 );
+					ilGenerator.Emit( OpCodes.Call, typeof( TableJoinMap ).GetProperty( "CanJoin" ).GetGetMethod() );
+					ilGenerator.Emit( OpCodes.Castclass, tableJoin.CanJoin.GetType() );
+					ilGenerator.Emit( OpCodes.Stloc, localBuilder );
+					ilGenerator.Emit( OpCodes.Ldloc, local3 );
+					ilGenerator.Emit( OpCodes.Call, typeof( TableJoinMap ).GetProperty( "ListSet" ).GetGetMethod() );
+					ilGenerator.Emit( OpCodes.Castclass, tableJoin.ListSet.GetType() );
+					ilGenerator.Emit( OpCodes.Stloc, local2 );
+					dictionary1.Add( tableJoin, new KeyValuePair<LocalBuilder, LocalBuilder>( localBuilder, local2 ) );
 				}
 			}
-
-
 			if ( classMapResult.Mappings.Joins.Count > 0 )
 			{
-				var joins = classMapResult.Mappings.Joins.ToList();
-				var joinsLocal = emitter.DeclareLocal( typeof( List<object> ) );
-				emitter.Emit( OpCodes.Ldarg_1 );
-				emitter.Emit( OpCodes.Ldc_I4, (int)MappingEnum.Join );
-				emitter.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
-				emitter.Emit( OpCodes.Castclass, typeof( List<object> ) );
-				emitter.Emit( OpCodes.Stloc, joinsLocal );
-				foreach ( var @join in joins )
+				List<KeyValuePair<KeyValuePair<Type, Type>, object>> list = classMapResult.Mappings.Joins.ToList<KeyValuePair<KeyValuePair<Type, Type>, object>>();
+				LocalBuilder local1 = ilGenerator.DeclareLocal( typeof( List<object> ) );
+				ilGenerator.Emit( OpCodes.Ldarg_1 );
+				ilGenerator.Emit( OpCodes.Ldc_I4, 1 );
+				ilGenerator.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
+				ilGenerator.Emit( OpCodes.Castclass, typeof( List<object> ) );
+				ilGenerator.Emit( OpCodes.Stloc, local1 );
+				foreach ( KeyValuePair<KeyValuePair<Type, Type>, object> keyValuePair in list )
 				{
-					var local = emitter.DeclareLocal( @join.Value.GetType() );
-
-					var index = joins.IndexOf( @join );
-
-					emitter.Emit( OpCodes.Ldloc, joinsLocal );
-					emitter.Emit( OpCodes.Ldc_I4, index );
-					emitter.Emit( OpCodes.Call, typeof( List<object> ).GetProperty( "Item" ).GetGetMethod() );
-					emitter.Emit( OpCodes.Castclass, @join.Value.GetType() );
-					emitter.Emit( OpCodes.Stloc, local );
-
-					joinLocalBuilders.Add( @join.Key, local );
+					LocalBuilder local2 = ilGenerator.DeclareLocal( keyValuePair.Value.GetType() );
+					int num = list.IndexOf( keyValuePair );
+					ilGenerator.Emit( OpCodes.Ldloc, local1 );
+					ilGenerator.Emit( OpCodes.Ldc_I4, num );
+					ilGenerator.Emit( OpCodes.Call, typeof( List<object> ).GetProperty( "Item" ).GetGetMethod() );
+					ilGenerator.Emit( OpCodes.Castclass, keyValuePair.Value.GetType() );
+					ilGenerator.Emit( OpCodes.Stloc, local2 );
+					dictionary2.Add( keyValuePair.Key, local2 );
 				}
 			}
-
 			if ( classMapResult.Mappings.DictionaryTableJoins.Count > 0 )
 			{
-				var tableJoinsLocal = emitter.DeclareLocal( typeof( List<KeyValuePair<object, object>> ) );
-				emitter.Emit( OpCodes.Ldarg_1 );
-				emitter.Emit( OpCodes.Ldc_I4, (int)MappingEnum.DictionaryJoin );
-				emitter.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
-				emitter.Emit( OpCodes.Castclass, typeof( List<KeyValuePair<object, object>> ) );
-				emitter.Emit( OpCodes.Stloc, tableJoinsLocal );
-				foreach ( var dictionaryTableJoin in classMapResult.Mappings.DictionaryTableJoins )
+				LocalBuilder local1 = ilGenerator.DeclareLocal( typeof( List<KeyValuePair<object, object>> ) );
+				ilGenerator.Emit( OpCodes.Ldarg_1 );
+				ilGenerator.Emit( OpCodes.Ldc_I4, 2 );
+				ilGenerator.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
+				ilGenerator.Emit( OpCodes.Castclass, typeof( List<KeyValuePair<object, object>> ) );
+				ilGenerator.Emit( OpCodes.Stloc, local1 );
+				foreach ( DictionaryTableJoin dictionaryTableJoin in classMapResult.Mappings.DictionaryTableJoins )
 				{
-					var conditionLocal = emitter.DeclareLocal( dictionaryTableJoin.Condition.GetType() );
-					var destinationLocal = emitter.DeclareLocal( typeof( Action<,> ).MakeGenericType( dictionaryTableJoin.ParentTableType, typeof( List<ExpandoObject> ) ) );
-
-					var tempLocal = emitter.DeclareLocal( typeof( KeyValuePair<object, object> ) );
-
-					var index = classMapResult.Mappings.DictionaryTableJoins.IndexOf( dictionaryTableJoin );
-					emitter.Emit( OpCodes.Ldloc, tableJoinsLocal );
-					emitter.Emit( OpCodes.Ldc_I4, index );
-					emitter.Emit( OpCodes.Call, typeof( List<KeyValuePair<object, object>> ).GetProperty( "Item" ).GetGetMethod() );
-					emitter.Emit( OpCodes.Stloc, tempLocal );
-					emitter.Emit( OpCodes.Ldloc, tempLocal );
-					emitter.Emit( OpCodes.Ldfld, typeof( KeyValuePair<object, object> ).GetField( "key", BindingFlags.Instance | BindingFlags.NonPublic ) );
-					emitter.Emit( OpCodes.Castclass, dictionaryTableJoin.Condition.GetType() );
-					emitter.Emit( OpCodes.Stloc, conditionLocal );
-					emitter.Emit( OpCodes.Ldloc, tempLocal );
-					emitter.Emit( OpCodes.Ldfld, typeof( KeyValuePair<object, object> ).GetField( "value", BindingFlags.Instance | BindingFlags.NonPublic ) );
-					emitter.Emit( OpCodes.Castclass, dictionaryTableJoin.Destination.GetType() );
-					emitter.Emit( OpCodes.Ldstr, dictionaryTableJoin.KeyColumn );
-					emitter.Emit( OpCodes.Ldstr, dictionaryTableJoin.ValueColumn );
-					emitter.Emit( OpCodes.Call, typeof( DynamicToDictionaryGenerator ).GetMethod( "Generate" ).MakeGenericMethod( dictionaryTableJoin.ParentTableType, dictionaryTableJoin.KeyType, dictionaryTableJoin.ValueType ) );
-					emitter.Emit( OpCodes.Stloc, destinationLocal );
-
-					dictionaryTableJoinsLocalBuilders.Add( new KeyValuePair<Type, int>( dictionaryTableJoin.ParentTableType, dictionaryTableJoin.ChildTable ), new KeyValuePair<LocalBuilder, LocalBuilder>( conditionLocal, destinationLocal ) );
+					LocalBuilder localBuilder = ilGenerator.DeclareLocal( dictionaryTableJoin.Condition.GetType() );
+					LocalBuilder local2 = ilGenerator.DeclareLocal( typeof( Action<,> ).MakeGenericType( dictionaryTableJoin.ParentTableType, typeof( List<ExpandoObject> ) ) );
+					LocalBuilder local3 = ilGenerator.DeclareLocal( typeof( KeyValuePair<object, object> ) );
+					int num = classMapResult.Mappings.DictionaryTableJoins.IndexOf( dictionaryTableJoin );
+					ilGenerator.Emit( OpCodes.Ldloc, local1 );
+					ilGenerator.Emit( OpCodes.Ldc_I4, num );
+					ilGenerator.Emit( OpCodes.Call, typeof( List<KeyValuePair<object, object>> ).GetProperty( "Item" ).GetGetMethod() );
+					ilGenerator.Emit( OpCodes.Stloc, local3 );
+					ilGenerator.Emit( OpCodes.Ldloc, local3 );
+					ilGenerator.Emit( OpCodes.Ldfld, typeof( KeyValuePair<object, object> ).GetField( "key", BindingFlags.Instance | BindingFlags.NonPublic ) );
+					ilGenerator.Emit( OpCodes.Castclass, dictionaryTableJoin.Condition.GetType() );
+					ilGenerator.Emit( OpCodes.Stloc, localBuilder );
+					ilGenerator.Emit( OpCodes.Ldloc, local3 );
+					ilGenerator.Emit( OpCodes.Ldfld, typeof( KeyValuePair<object, object> ).GetField( "value", BindingFlags.Instance | BindingFlags.NonPublic ) );
+					ilGenerator.Emit( OpCodes.Castclass, dictionaryTableJoin.Destination.GetType() );
+					ilGenerator.Emit( OpCodes.Ldstr, dictionaryTableJoin.KeyColumn );
+					ilGenerator.Emit( OpCodes.Ldstr, dictionaryTableJoin.ValueColumn );
+					ilGenerator.Emit( OpCodes.Call, typeof( DynamicToDictionaryGenerator ).GetMethod( nameof( Generate ) ).MakeGenericMethod( dictionaryTableJoin.ParentTableType, dictionaryTableJoin.KeyType, dictionaryTableJoin.ValueType ) );
+					ilGenerator.Emit( OpCodes.Stloc, local2 );
+					dictionary3.Add( new KeyValuePair<Type, int>( dictionaryTableJoin.ParentTableType, dictionaryTableJoin.ChildTable ), new KeyValuePair<LocalBuilder, LocalBuilder>( localBuilder, local2 ) );
 				}
 			}
-
-			#endregion
-
-			//Load Tables
-			var localBuilders = new Dictionary<KeyValuePair<Type, int>, LocalBuilder>();
-
-			var maxTableId = classMapResult.Mappings.TableMaps.Select( x=>x.Key ).OrderBy( x=>x).Last();
-			for ( var i = 0; i <= maxTableId; i++ )
+			Dictionary<KeyValuePair<Type, int>, LocalBuilder> source = new Dictionary<KeyValuePair<Type, int>, LocalBuilder>();
+			int num1 = classMapResult.Mappings.TableMaps.Select<KeyValuePair<int, Type>, int>( (Func<KeyValuePair<int, Type>, int>)( x => x.Key ) ).OrderBy<int, int>( (Func<int, int>)( x => x ) ).Last<int>();
+			for ( int index = 0; index <= num1; ++index )
 			{
-				if ( ! classMapResult.Mappings.TableMaps.ContainsKey( i ) )
-					continue;
-				
-				var type = classMapResult.Mappings.TableMaps[ i ];
-
-				var localBuilder = ObjectSettingEmitter.Emit( emitter, type, classMapResult.Mappings, i );
-				localBuilders.Add( new KeyValuePair<Type, int>( type, i ), localBuilder );
-				emitter.Emit( OpCodes.Ldarg_0 );
-				emitter.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "NextResult" ) );
+				if ( classMapResult.Mappings.TableMaps.ContainsKey( index ) )
+				{
+					Type tableMap = classMapResult.Mappings.TableMaps[ index ];
+					LocalBuilder localBuilder = ObjectSettingEmitter.Emit( ilGenerator, tableMap, classMapResult.Mappings, index );
+					source.Add( new KeyValuePair<Type, int>( tableMap, index ), localBuilder );
+					ilGenerator.Emit( OpCodes.Ldarg_0 );
+					ilGenerator.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "NextResult" ) );
+				}
 			}
-
-			#region Run Mappings
-
-			foreach ( var tableJoinsLocalBuilder in tableJoinsLocalBuilders )
+			foreach ( KeyValuePair<TableJoinMap, KeyValuePair<LocalBuilder, LocalBuilder>> keyValuePair in dictionary1 )
 			{
-				var parentType = tableJoinsLocalBuilder.Key.ParentType;
-				var childType = tableJoinsLocalBuilder.Key.ChildType;
-
-				emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Key == parentType ).Value );
-				emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Key == childType ).Value );
-				emitter.Emit( OpCodes.Ldloc, tableJoinsLocalBuilder.Value.Key );
-				emitter.Emit( OpCodes.Ldloc, tableJoinsLocalBuilder.Value.Value );
-				emitter.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "JoinTables" ).MakeGenericMethod( parentType, childType ) );
+				Type parentType = keyValuePair.Key.ParentType;
+				Type childType = keyValuePair.Key.ChildType;
+				ilGenerator.Emit( OpCodes.Ldloc, source.First<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>>( (Func<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>, bool>)( x => x.Key.Key == parentType ) ).Value );
+				ilGenerator.Emit( OpCodes.Ldloc, source.First<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>>( (Func<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>, bool>)( x => x.Key.Key == childType ) ).Value );
+				ilGenerator.Emit( OpCodes.Ldloc, keyValuePair.Value.Key );
+				ilGenerator.Emit( OpCodes.Ldloc, keyValuePair.Value.Value );
+				ilGenerator.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "JoinTables" ).MakeGenericMethod( parentType, childType ) );
 			}
-
-			foreach ( var joinLocalBuilder in joinLocalBuilders )
+			foreach ( KeyValuePair<KeyValuePair<Type, Type>, LocalBuilder> keyValuePair in dictionary2 )
 			{
-				var parentType = joinLocalBuilder.Key.Key;
-				var childType = joinLocalBuilder.Key.Value;
-
-				emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Key == parentType ).Value );
-				emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Key == childType ).Value );
-				emitter.Emit( OpCodes.Ldloc, joinLocalBuilder.Value );
-				emitter.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "Join" ).MakeGenericMethod( parentType, childType ) );
+				Type parentType = keyValuePair.Key.Key;
+				Type childType = keyValuePair.Key.Value;
+				ilGenerator.Emit( OpCodes.Ldloc, source.First<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>>( (Func<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>, bool>)( x => x.Key.Key == parentType ) ).Value );
+				ilGenerator.Emit( OpCodes.Ldloc, source.First<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>>( (Func<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>, bool>)( x => x.Key.Key == childType ) ).Value );
+				ilGenerator.Emit( OpCodes.Ldloc, keyValuePair.Value );
+				ilGenerator.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "Join" ).MakeGenericMethod( parentType, childType ) );
 			}
-
-			foreach ( var dictionaryTableJoinsLocalBuilder in dictionaryTableJoinsLocalBuilders )
+			foreach ( KeyValuePair<KeyValuePair<Type, int>, KeyValuePair<LocalBuilder, LocalBuilder>> keyValuePair in dictionary3 )
 			{
-				var parentType = dictionaryTableJoinsLocalBuilder.Key.Key;
-				var childId = dictionaryTableJoinsLocalBuilder.Key.Value;
-
-				emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Key == parentType ).Value );
-				emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Value == childId ).Value );
-				emitter.Emit( OpCodes.Ldloc, dictionaryTableJoinsLocalBuilder.Value.Key );
-				emitter.Emit( OpCodes.Ldloc, dictionaryTableJoinsLocalBuilder.Value.Value );
-				emitter.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "JoinTables" ).MakeGenericMethod( parentType, typeof( ExpandoObject ) ) );
+				Type parentType = keyValuePair.Key.Key;
+				int childId = keyValuePair.Key.Value;
+				ilGenerator.Emit( OpCodes.Ldloc, source.First<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>>( (Func<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>, bool>)( x => x.Key.Key == parentType ) ).Value );
+				ilGenerator.Emit( OpCodes.Ldloc, source.First<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>>( (Func<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>, bool>)( x => x.Key.Value == childId ) ).Value );
+				ilGenerator.Emit( OpCodes.Ldloc, keyValuePair.Value.Key );
+				ilGenerator.Emit( OpCodes.Ldloc, keyValuePair.Value.Value );
+				ilGenerator.Emit( OpCodes.Call, typeof( MappingGenerator ).GetMethod( "JoinTables" ).MakeGenericMethod( parentType, typeof( ExpandoObject ) ) );
 			}
-
-			#endregion
-
-			emitter.Emit( OpCodes.Ldloc, localBuilders.First( x => x.Key.Key == baseType ).Value );
-			if ( !isList )
-				emitter.Emit( OpCodes.Call, typeof( Enumerable ).GetMethods().First( x => x.Name == "FirstOrDefault" && x.GetParameters().Count() == 1 ).MakeGenericMethod( typeof( T ) ) );
-			emitter.Emit( OpCodes.Ret );
-
-			#region dynamicmethod that outputs dll
-
-			//var t = builder.CreateType();
-			//assemblyBuilder.Save(assemblyName.Name + ".dll");
-			//return null;
-
-			#endregion
-
-			#region working dynamicmethod
-
-			return (Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T>)method.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int,Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> ) );
-
-			#endregion
+			ilGenerator.Emit( OpCodes.Ldloc, source.First<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>>( (Func<KeyValuePair<KeyValuePair<Type, int>, LocalBuilder>, bool>)( x => x.Key.Key == baseType ) ).Value );
+			if ( !flag )
+				ilGenerator.Emit( OpCodes.Call, ( (IEnumerable<MethodInfo>)typeof( Enumerable ).GetMethods() ).First<MethodInfo>( (Func<MethodInfo, bool>)( x =>
+					{
+						if ( x.Name == "FirstOrDefault" )
+							return ( (IEnumerable<ParameterInfo>)x.GetParameters() ).Count<ParameterInfo>() == 1;
+						return false;
+					} ) ).MakeGenericMethod( typeof( T ) ) );
+			ilGenerator.Emit( OpCodes.Ret );
+			return (Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T>)dynamicMethod.CreateDelegate( typeof( Func<IDataReader, Dictionary<MappingEnum, object>, Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>>, T> ) );
 		}
 
-		public static void JoinTables<TParent, TChild>( List<TParent> parents, IEnumerable<TChild> children, Func<TParent, TChild, bool> canJoin, Action<TParent, List<TChild>> setFunc )
+		public static void JoinTables<TParent, TChild>(
+		  List<TParent> parents,
+		  IEnumerable<TChild> children,
+		  Func<TParent, TChild, bool> canJoin,
+		  Action<TParent, List<TChild>> setFunc )
 		{
-			parents.ForEach( x => setFunc( x, children.Where( y => canJoin( x, y ) ).ToList() ) );
+			parents.ForEach( (Action<TParent>)( x => setFunc( x, children.Where<TChild>( (Func<TChild, bool>)( y => canJoin( x, y ) ) ).ToList<TChild>() ) ) );
 		}
 
-		public static void Join<TParent, TChild>( List<TParent> parents, List<TChild> children, Action<TParent, List<TChild>> setFunc )
+		public static void Join<TParent, TChild>(
+		  List<TParent> parents,
+		  List<TChild> children,
+		  Action<TParent, List<TChild>> setFunc )
 		{
-			parents.ForEach( x => setFunc( x, children ) );
+			parents.ForEach( (Action<TParent>)( x => setFunc( x, children ) ) );
 		}
 	}
 }

@@ -1,3 +1,4 @@
+﻿using SqlObjectHydrator.ClassMapping;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -5,123 +6,110 @@ using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using SqlObjectHydrator.ClassMapping;
 
 namespace SqlObjectHydrator.ILEmitting
 {
 	internal static class ObjectSettingEmitter
 	{
 		public static int TableId = 0;
+		private static object safeTypeMapsAddLockObj = new object();
 
-		public static LocalBuilder Emit( ILGenerator emitter, Type type, Mapping mapping, int tableId )
+		public static LocalBuilder Emit(
+		  ILGenerator emitter,
+		  Type type,
+		  Mapping mapping,
+		  int tableId )
 		{
-			var listType = typeof( List<> ).MakeGenericType( type );
-			var resultLocalBuilder = emitter.DeclareLocal( listType );
-			emitter.Emit( OpCodes.Newobj, listType.GetConstructors()[ 0 ] );
-			emitter.Emit( OpCodes.Stloc, resultLocalBuilder );
-
-			var tempRoot = emitter.DeclareLocal( type );
-
-			LocalBuilder variableTableTypeFunc = null;
-
+			Type localType = typeof( List<> ).MakeGenericType( type );
+			LocalBuilder local1 = emitter.DeclareLocal( localType );
+			emitter.Emit( OpCodes.Newobj, localType.GetConstructors()[ 0 ] );
+			emitter.Emit( OpCodes.Stloc, local1 );
+			LocalBuilder local2 = emitter.DeclareLocal( type );
+			LocalBuilder local3 = (LocalBuilder)null;
 			if ( mapping.VariableTableTypes.ContainsKey( type ) )
 			{
-				variableTableTypeFunc = emitter.DeclareLocal( typeof( Func<IDataRecord, Type> ) );
-
+				local3 = emitter.DeclareLocal( typeof( Func<IDataRecord, Type> ) );
 				emitter.Emit( OpCodes.Ldarg_1 );
-				emitter.Emit( OpCodes.Ldc_I4, (int)MappingEnum.VariableTableType );
+				emitter.Emit( OpCodes.Ldc_I4, 4 );
 				emitter.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
 				emitter.Emit( OpCodes.Castclass, typeof( Dictionary<Type, object> ) );
-
-
 				emitter.Emit( OpCodes.Ldtoken, type );
 				emitter.Emit( OpCodes.Call, typeof( Type ).GetMethod( "GetTypeFromHandle" ) );
 				emitter.Emit( OpCodes.Callvirt, typeof( Dictionary<Type, object> ).GetProperty( "Item" ).GetGetMethod() );
 				emitter.Emit( OpCodes.Castclass, typeof( Func<IDataRecord, Type> ) );
-				emitter.Emit( OpCodes.Stloc, variableTableTypeFunc );
+				emitter.Emit( OpCodes.Stloc, local3 );
 			}
-
-
-			//Define While Labels
-			var whileIf = emitter.DefineLabel();
-			var whileStart = emitter.DefineLabel();
-
-			//Start While Loop
-			emitter.Emit( OpCodes.Br, whileIf );
-			emitter.MarkLabel( whileStart );
-
-			//Create Root Variable
+			Label label1 = emitter.DefineLabel();
+			Label label2 = emitter.DefineLabel();
+			emitter.Emit( OpCodes.Br, label1 );
+			emitter.MarkLabel( label2 );
 			emitter.Emit( OpCodes.Newobj, type.GetConstructors()[ 0 ] );
-			emitter.Emit( OpCodes.Stloc, tempRoot );
-
-			//Get Type
-			var typeLocal = emitter.DeclareLocal( typeof( Type ) );
-
+			emitter.Emit( OpCodes.Stloc, local2 );
+			LocalBuilder local4 = emitter.DeclareLocal( typeof( Type ) );
 			if ( mapping.VariableTableTypes.ContainsKey( type ) )
 			{
-				emitter.Emit( OpCodes.Ldloc, variableTableTypeFunc );
+				emitter.Emit( OpCodes.Ldloc, local3 );
 				emitter.Emit( OpCodes.Ldarg_0 );
 				emitter.Emit( OpCodes.Callvirt, typeof( Func<IDataRecord, Type> ).GetMethod( "Invoke" ) );
-				emitter.Emit( OpCodes.Stloc, typeLocal );
+				emitter.Emit( OpCodes.Stloc, local4 );
 			}
 			else
 			{
 				emitter.Emit( OpCodes.Ldtoken, type );
 				emitter.Emit( OpCodes.Call, typeof( Type ).GetMethod( "GetTypeFromHandle" ) );
-				emitter.Emit( OpCodes.Stloc, typeLocal );
+				emitter.Emit( OpCodes.Stloc, local4 );
 			}
-
-
-			var endIf = emitter.DefineLabel();
-
+			Label label3 = emitter.DefineLabel();
 			emitter.Emit( OpCodes.Ldarg_2 );
-			emitter.Emit( OpCodes.Ldc_I4, tableId);
-			emitter.Emit( OpCodes.Ldloc, typeLocal );
+			emitter.Emit( OpCodes.Ldc_I4, tableId );
+			emitter.Emit( OpCodes.Ldloc, local4 );
 			emitter.Emit( OpCodes.Call, typeof( ObjectSettingEmitter ).GetMethod( "GetMappingCacheTuple" ) );
 			emitter.Emit( OpCodes.Call, typeof( Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetMethod( "ContainsKey" ) );
-			emitter.Emit( OpCodes.Brtrue, endIf );
-
-			var objectMethodLocal = emitter.DeclareLocal( typeof( Func<IDataRecord, Dictionary<MappingEnum, object>, object> ) );
-
-			emitter.Emit( OpCodes.Ldloc, typeLocal );
+			emitter.Emit( OpCodes.Brtrue, label3 );
+			LocalBuilder local5 = emitter.DeclareLocal( typeof( Func<IDataRecord, Dictionary<MappingEnum, object>, object> ) );
+			emitter.Emit( OpCodes.Ldloc, local4 );
 			emitter.Emit( OpCodes.Ldarg_0 );
 			emitter.Emit( OpCodes.Ldarg_1 );
 			emitter.Emit( OpCodes.Call, typeof( ObjectSettingEmitter ).GetMethod( "GenerateObjectBuilder" ) );
-			emitter.Emit( OpCodes.Stloc, objectMethodLocal );
-
+			emitter.Emit( OpCodes.Stloc, local5 );
 			emitter.Emit( OpCodes.Ldarg_2 );
-			emitter.Emit( OpCodes.Ldc_I4, tableId);
-			emitter.Emit( OpCodes.Ldloc, typeLocal );
+			emitter.Emit( OpCodes.Ldc_I4, tableId );
+			emitter.Emit( OpCodes.Ldloc, local4 );
 			emitter.Emit( OpCodes.Call, typeof( ObjectSettingEmitter ).GetMethod( "GetMappingCacheTuple" ) );
-			emitter.Emit( OpCodes.Ldloc, objectMethodLocal );
-			emitter.Emit( OpCodes.Call, typeof( Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetMethod( "Add" ) );
-
-			emitter.MarkLabel( endIf );
-
+			emitter.Emit( OpCodes.Ldloc, local5 );
+			emitter.Emit( OpCodes.Call, typeof( ObjectSettingEmitter ).GetMethod( "SafeTypeMapsAdd" ) );
+			emitter.MarkLabel( label3 );
 			emitter.Emit( OpCodes.Ldarg_2 );
-			emitter.Emit( OpCodes.Ldc_I4, tableId);
-			emitter.Emit( OpCodes.Ldloc, typeLocal );
+			emitter.Emit( OpCodes.Ldc_I4, tableId );
+			emitter.Emit( OpCodes.Ldloc, local4 );
 			emitter.Emit( OpCodes.Call, typeof( ObjectSettingEmitter ).GetMethod( "GetMappingCacheTuple" ) );
 			emitter.Emit( OpCodes.Call, typeof( Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> ).GetProperty( "Item" ).GetGetMethod() );
 			emitter.Emit( OpCodes.Ldarg_0 );
 			emitter.Emit( OpCodes.Ldarg_1 );
 			emitter.Emit( OpCodes.Call, typeof( Func<IDataRecord, Dictionary<MappingEnum, object>, object> ).GetMethod( "Invoke" ) );
 			emitter.Emit( OpCodes.Castclass, type );
-			emitter.Emit( OpCodes.Stloc, tempRoot );
-
-
-			//Add Root Variable To Result
-			emitter.Emit( OpCodes.Ldloc, resultLocalBuilder );
-			emitter.Emit( OpCodes.Ldloc, tempRoot );
-			emitter.Emit( OpCodes.Callvirt, listType.GetMethod( "Add" ) );
-
-			//While If
-			emitter.MarkLabel( whileIf );
+			emitter.Emit( OpCodes.Stloc, local2 );
+			emitter.Emit( OpCodes.Ldloc, local1 );
+			emitter.Emit( OpCodes.Ldloc, local2 );
+			emitter.Emit( OpCodes.Callvirt, localType.GetMethod( "Add" ) );
+			emitter.MarkLabel( label1 );
 			emitter.Emit( OpCodes.Ldarg_0 );
 			emitter.Emit( OpCodes.Callvirt, typeof( IDataReader ).GetMethod( "Read" ) );
-			emitter.Emit( OpCodes.Brtrue, whileStart ); //Continue While Loop
+			emitter.Emit( OpCodes.Brtrue, label2 );
+			return local1;
+		}
 
-			return resultLocalBuilder;
+		public static void SafeTypeMapsAdd(
+		  Dictionary<Tuple<int, Type>, Func<IDataRecord, Dictionary<MappingEnum, object>, object>> dictionary,
+		  Tuple<int, Type> key,
+		  Func<IDataRecord, Dictionary<MappingEnum, object>, object> value )
+		{
+			lock ( ObjectSettingEmitter.safeTypeMapsAddLockObj )
+			{
+				if ( dictionary.ContainsKey( key ) )
+					return;
+				dictionary.Add( key, value );
+			}
 		}
 
 		public static Tuple<int, Type> GetMappingCacheTuple( int tableId, Type type )
@@ -129,96 +117,99 @@ namespace SqlObjectHydrator.ILEmitting
 			return new Tuple<int, Type>( tableId, type );
 		}
 
-		public static Func<IDataRecord, Dictionary<MappingEnum, object>, object> GenerateObjectBuilder( Type type, IDataRecord dataRecord, Dictionary<MappingEnum, object> mappings )
+		public static Func<IDataRecord, Dictionary<MappingEnum, object>, object> GenerateObjectBuilder(
+		  Type type,
+		  IDataRecord dataRecord,
+		  Dictionary<MappingEnum, object> mappings )
 		{
-			var propertyMaps = mappings.ContainsKey( MappingEnum.PropertyMap ) ? mappings[ MappingEnum.PropertyMap ] as Dictionary<PropertyInfo, PropertyMap> : new Dictionary<PropertyInfo, PropertyMap>();
-			var filteredPropertyMaps = propertyMaps.Where( x => x.Key.DeclaringType.IsAssignableFrom( type ) ).ToList();
-
-			var method = new DynamicMethod( "", typeof( object ), new[]
+			Dictionary<PropertyInfo, PropertyMap> source = mappings.ContainsKey( MappingEnum.PropertyMap ) ? mappings[ MappingEnum.PropertyMap ] as Dictionary<PropertyInfo, PropertyMap> : new Dictionary<PropertyInfo, PropertyMap>();
+			List<KeyValuePair<PropertyInfo, PropertyMap>> list = source.Where<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x => x.Key.DeclaringType.IsAssignableFrom( type ) ) ).ToList<KeyValuePair<PropertyInfo, PropertyMap>>();
+			DynamicMethod dynamicMethod = new DynamicMethod( "", typeof( object ), new Type[ 2 ]
 			{
-				typeof( IDataRecord ),
-				typeof( Dictionary<MappingEnum, object> )
+		typeof (IDataRecord),
+		typeof (Dictionary<MappingEnum, object>)
 			}, true );
-			var emitter = method.GetILGenerator();
-
-
-			var localPropertyMapsBuilders = new Dictionary<PropertyInfo, LocalBuilder>();
-			if ( filteredPropertyMaps.Count > 0 )
+			ILGenerator ilGenerator1 = dynamicMethod.GetILGenerator();
+			Dictionary<PropertyInfo, LocalBuilder> dictionary = new Dictionary<PropertyInfo, LocalBuilder>();
+			if ( list.Count > 0 )
 			{
-				var propertyMapsLocal = emitter.DeclareLocal( typeof( List<PropertyMap> ) );
-
-				emitter.Emit( OpCodes.Ldarg_1 );
-				emitter.Emit( OpCodes.Ldc_I4, (int)MappingEnum.PropertyMap );
-				emitter.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
-				emitter.Emit( OpCodes.Castclass, typeof( Dictionary<PropertyInfo, PropertyMap> ) );
-				emitter.Emit( OpCodes.Call, typeof( Dictionary<PropertyInfo, PropertyMap> ).GetProperty( "Values" ).GetGetMethod() );
-				emitter.Emit( OpCodes.Call, typeof( Enumerable ).GetMethod( "ToList" ).MakeGenericMethod( typeof( PropertyMap ) ) );
-				emitter.Emit( OpCodes.Stloc, propertyMapsLocal );
-
-				foreach ( var propertyMap in filteredPropertyMaps.Where( x => x.Value.PropertyMapType == PropertyMapType.Func ) )
+				LocalBuilder local1 = ilGenerator1.DeclareLocal( typeof( List<PropertyMap> ) );
+				ilGenerator1.Emit( OpCodes.Ldarg_1 );
+				ilGenerator1.Emit( OpCodes.Ldc_I4, 3 );
+				ilGenerator1.Emit( OpCodes.Callvirt, typeof( Dictionary<MappingEnum, object> ).GetMethod( "GetValueOrDefault", BindingFlags.Instance | BindingFlags.NonPublic ) );
+				ilGenerator1.Emit( OpCodes.Castclass, typeof( Dictionary<PropertyInfo, PropertyMap> ) );
+				ilGenerator1.Emit( OpCodes.Call, typeof( Dictionary<PropertyInfo, PropertyMap> ).GetProperty( "Values" ).GetGetMethod() );
+				ilGenerator1.Emit( OpCodes.Call, typeof( Enumerable ).GetMethod( "ToList" ).MakeGenericMethod( typeof( PropertyMap ) ) );
+				ilGenerator1.Emit( OpCodes.Stloc, local1 );
+				foreach ( KeyValuePair<PropertyInfo, PropertyMap> keyValuePair in list.Where<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x => x.Value.PropertyMapType == PropertyMapType.Func ) ) )
 				{
-					var localBuilder = emitter.DeclareLocal( propertyMap.Value.SetAction.GetType() );
-					var index = propertyMaps.Keys.ToList().IndexOf( propertyMap.Key );
-
-					emitter.Emit( OpCodes.Ldloc, propertyMapsLocal );
-					emitter.Emit( OpCodes.Ldc_I4, index );
-					emitter.Emit( OpCodes.Call, typeof( List<PropertyMap> ).GetProperty( "Item" ).GetGetMethod() );
-					emitter.Emit( OpCodes.Call, typeof( PropertyMap ).GetProperty( "SetAction" ).GetGetMethod() );
-					emitter.Emit( OpCodes.Castclass, propertyMap.Value.SetAction.GetType() );
-					emitter.Emit( OpCodes.Stloc, localBuilder );
-					localPropertyMapsBuilders.Add( propertyMap.Key, localBuilder );
+					LocalBuilder local2 = ilGenerator1.DeclareLocal( keyValuePair.Value.SetAction.GetType() );
+					int num = source.Keys.ToList<PropertyInfo>().IndexOf( keyValuePair.Key );
+					ilGenerator1.Emit( OpCodes.Ldloc, local1 );
+					ilGenerator1.Emit( OpCodes.Ldc_I4, num );
+					ilGenerator1.Emit( OpCodes.Call, typeof( List<PropertyMap> ).GetProperty( "Item" ).GetGetMethod() );
+					ilGenerator1.Emit( OpCodes.Call, typeof( PropertyMap ).GetProperty( "SetAction" ).GetGetMethod() );
+					ilGenerator1.Emit( OpCodes.Castclass, keyValuePair.Value.SetAction.GetType() );
+					ilGenerator1.Emit( OpCodes.Stloc, local2 );
+					dictionary.Add( keyValuePair.Key, local2 );
 				}
 			}
-
-			var objectVariable = emitter.DeclareLocal( type );
-
-			emitter.Emit( OpCodes.Newobj, type.GetConstructors()[ 0 ] );
-			emitter.Emit( OpCodes.Stloc, objectVariable );
-
-			for ( var i = 0; i < dataRecord.FieldCount; i++ )
+			LocalBuilder localBuilder = ilGenerator1.DeclareLocal( type );
+			ilGenerator1.Emit( OpCodes.Newobj, type.GetConstructors()[ 0 ] );
+			ilGenerator1.Emit( OpCodes.Stloc, localBuilder );
+			for ( int i = 0; i < dataRecord.FieldCount; ++i )
 			{
 				if ( type == typeof( ExpandoObject ) )
 				{
-					var valueLocalBuilder = emitter.DeclareLocal( dataRecord.GetFieldType( i ) );
-					DataReaderEmitter.GetPropertyValue( emitter, dataRecord.GetFieldType( i ), i, false );
-					emitter.Emit( OpCodes.Stloc, valueLocalBuilder );
-					ExpandoObjectInteractor.SetExpandoProperty( emitter, objectVariable, dataRecord.GetName( i ), valueLocalBuilder );
+					LocalBuilder local = ilGenerator1.DeclareLocal( dataRecord.GetFieldType( i ) );
+					DataReaderEmitter.GetPropertyValue( ilGenerator1, dataRecord.GetFieldType( i ), i, false, (object)null );
+					ilGenerator1.Emit( OpCodes.Stloc, local );
+					ExpandoObjectInteractor.SetExpandoProperty( ilGenerator1, localBuilder, dataRecord.GetName( i ), local );
 				}
 				else
 				{
 					PropertyInfo propertyInfo;
-					if ( filteredPropertyMaps.Any( x => x.Value.PropertyMapType == PropertyMapType.ColumnId && x.Value.ColumnId == i ) )
-						propertyInfo = filteredPropertyMaps.First( x => x.Value.ColumnId == i ).Key;
-					else if ( filteredPropertyMaps.Any( x => x.Value.PropertyMapType == PropertyMapType.ColumnName && x.Value.ColumnName == dataRecord.GetName( i ) ) )
-						propertyInfo = filteredPropertyMaps.First( x => x.Value.ColumnName == dataRecord.GetName( i ) ).Key;
-					else if ( filteredPropertyMaps.Any( x => x.Key.Name == dataRecord.GetName( i ) ) )
-						propertyInfo = null;
+					if ( list.Any<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x =>
+					  {
+						  if ( x.Value.PropertyMapType == PropertyMapType.ColumnId )
+							  return x.Value.ColumnId == i;
+						  return false;
+					  } ) ) )
+						propertyInfo = list.First<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x => x.Value.ColumnId == i ) ).Key;
+					else if ( list.Any<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x =>
+					  {
+						  if ( x.Value.PropertyMapType == PropertyMapType.ColumnName )
+							  return x.Value.ColumnName == dataRecord.GetName( i );
+						  return false;
+					  } ) ) )
+						propertyInfo = list.First<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x => x.Value.ColumnName == dataRecord.GetName( i ) ) ).Key;
 					else
-						propertyInfo = type.GetProperty( dataRecord.GetName( i ) );
-					if ( propertyInfo != null && propertyInfo.GetActualPropertyType() == dataRecord.GetFieldType( i ) && filteredPropertyMaps.Where( x => x.Value.PropertyMapType == PropertyMapType.Func ).All( x => x.Key != propertyInfo ) )
+						propertyInfo = !list.Any<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x => x.Key.Name == dataRecord.GetName( i ) ) ) ? type.GetProperty( dataRecord.GetName( i ) ) : (PropertyInfo)null;
+					if ( propertyInfo != (PropertyInfo)null && propertyInfo.GetActualPropertyType() == dataRecord.GetFieldType( i ) && list.Where<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x => x.Value.PropertyMapType == PropertyMapType.Func ) ).All<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x => x.Key != propertyInfo ) ) )
 					{
-						emitter.Emit( OpCodes.Ldloc, objectVariable );
-						DataReaderEmitter.GetPropertyValue( emitter, propertyInfo.PropertyType, i, propertyInfo.IsNullable() );
-						emitter.Emit( OpCodes.Callvirt, propertyInfo.GetSetMethod() );
+						ilGenerator1.Emit( OpCodes.Ldloc, localBuilder );
+						DataReaderEmitter.GetPropertyValue( ilGenerator1, propertyInfo.PropertyType, i, propertyInfo.IsNullable(), (object)null );
+						ilGenerator1.Emit( OpCodes.Callvirt, propertyInfo.GetSetMethod() );
 					}
 				}
 			}
-
-			foreach ( var propertyMap in filteredPropertyMaps.Where( x => x.Value.PropertyMapType == PropertyMapType.Func ) )
+			foreach ( KeyValuePair<PropertyInfo, PropertyMap> keyValuePair in list.Where<KeyValuePair<PropertyInfo, PropertyMap>>( (Func<KeyValuePair<PropertyInfo, PropertyMap>, bool>)( x => x.Value.PropertyMapType == PropertyMapType.Func ) ) )
 			{
-				var propertyMapLocal = localPropertyMapsBuilders[ propertyMap.Key ];
-
-				emitter.Emit( OpCodes.Ldloc, objectVariable );
-				emitter.Emit( OpCodes.Ldloc, propertyMapLocal );
-				emitter.Emit( OpCodes.Ldarg_0 );
-				emitter.Emit( OpCodes.Call, propertyMapLocal.LocalType.GetMethod( "Invoke" ) );
-				emitter.Emit( OpCodes.Callvirt, propertyMap.Key.GetSetMethod() ?? propertyMap.Key.GetSetMethod( true ) );
+				LocalBuilder local = dictionary[ keyValuePair.Key ];
+				ilGenerator1.Emit( OpCodes.Ldloc, localBuilder );
+				ilGenerator1.Emit( OpCodes.Ldloc, local );
+				ilGenerator1.Emit( OpCodes.Ldarg_0 );
+				ilGenerator1.Emit( OpCodes.Call, local.LocalType.GetMethod( "Invoke" ) );
+				ILGenerator ilGenerator2 = ilGenerator1;
+				OpCode callvirt = OpCodes.Callvirt;
+				MethodInfo setMethod = keyValuePair.Key.GetSetMethod();
+				if ( (object)setMethod == null )
+					setMethod = keyValuePair.Key.GetSetMethod( true );
+				ilGenerator2.Emit( callvirt, setMethod );
 			}
-
-			emitter.Emit( OpCodes.Ldloc, objectVariable );
-			emitter.Emit( OpCodes.Ret );
-
-			return (Func<IDataRecord, Dictionary<MappingEnum, object>, object>)method.CreateDelegate( typeof( Func<IDataRecord, Dictionary<MappingEnum, object>, object> ) );
+			ilGenerator1.Emit( OpCodes.Ldloc, localBuilder );
+			ilGenerator1.Emit( OpCodes.Ret );
+			return (Func<IDataRecord, Dictionary<MappingEnum, object>, object>)dynamicMethod.CreateDelegate( typeof( Func<IDataRecord, Dictionary<MappingEnum, object>, object> ) );
 		}
 	}
 }
