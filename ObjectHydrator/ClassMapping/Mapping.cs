@@ -1,3 +1,4 @@
+﻿using SqlObjectHydrator.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -5,101 +6,94 @@ using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using SqlObjectHydrator.Configuration;
 
 namespace SqlObjectHydrator.ClassMapping
 {
 	internal class Mapping : IMapping
 	{
 		public Dictionary<PropertyInfo, PropertyMap> PropertyMaps { get; set; }
+
 		public Dictionary<int, Type> TableMaps { get; set; }
+
 		public List<DictionaryTableJoin> DictionaryTableJoins { get; set; }
+
 		public List<TableJoinMap> TableJoins { get; set; }
+
 		public Dictionary<KeyValuePair<Type, Type>, object> Joins { get; set; }
+
 		public Dictionary<Type, object> VariableTableTypes { get; set; }
 
 		public Mapping()
 		{
-			PropertyMaps = new Dictionary<PropertyInfo, PropertyMap>();
-			TableMaps = new Dictionary<int, Type>();
-			DictionaryTableJoins = new List<DictionaryTableJoin>();
-			TableJoins = new List<TableJoinMap>();
-			Joins = new Dictionary<KeyValuePair<Type, Type>, object>();
-			VariableTableTypes = new Dictionary<Type, object>();
+			this.PropertyMaps = new Dictionary<PropertyInfo, PropertyMap>();
+			this.TableMaps = new Dictionary<int, Type>();
+			this.DictionaryTableJoins = new List<DictionaryTableJoin>();
+			this.TableJoins = new List<TableJoinMap>();
+			this.Joins = new Dictionary<KeyValuePair<Type, Type>, object>();
+			this.VariableTableTypes = new Dictionary<Type, object>();
 		}
 
 		void IMapping.Table<T>( int id )
 		{
-			TableMaps.Add( id, typeof( T ) );
+			this.TableMaps.Add( id, typeof( T ) );
 		}
 
-		void IMapping.PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, Func<IDataRecord, TResult> setAction )
+		void IMapping.PropertyMap<T, TResult>(
+		  Expression<Func<T, TResult>> property,
+		  Func<IDataRecord, TResult> setAction )
 		{
-			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( setAction ) );
+			this.PropertyMaps.Add( Mapping.GetPropertyInfo<T>( ( (IEnumerable<string>)property.ToString().Split( '.' ) ).Last<string>() ), new PropertyMap( (Delegate)setAction ) );
 		}
 
 		public void PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, string columnName )
 		{
-			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( columnName ) );
+			this.PropertyMaps.Add( Mapping.GetPropertyInfo<T>( ( (IEnumerable<string>)property.ToString().Split( '.' ) ).Last<string>() ), new PropertyMap( columnName ) );
 		}
 
 		public void PropertyMap<T, TResult>( Expression<Func<T, TResult>> property, int columnId )
 		{
-			PropertyMaps.Add( GetPropertyInfo<T>( property.ToString().Split( '.' ).Last() ), new PropertyMap( columnId ) );
+			this.PropertyMaps.Add( Mapping.GetPropertyInfo<T>( ( (IEnumerable<string>)property.ToString().Split( '.' ) ).Last<string>() ), new PropertyMap( columnId ) );
 		}
 
 		private static PropertyInfo GetPropertyInfo<T>( string name )
 		{
-			var propertyInfo = typeof( T ).GetProperty( name ) ?? typeof( T ).GetProperty( name, BindingFlags.Instance | BindingFlags.NonPublic );
-			return propertyInfo;
+			PropertyInfo property = typeof( T ).GetProperty( name );
+			if ( (object)property == null )
+				property = typeof( T ).GetProperty( name, BindingFlags.Instance | BindingFlags.NonPublic );
+			return property;
 		}
 
-		void IMapping.TableJoin<TParent, TChild>( Func<TParent, TChild, bool> canJoin, Action<TParent, List<TChild>> listSet )
+		void IMapping.TableJoin<TParent, TChild>(
+		  Func<TParent, TChild, bool> canJoin,
+		  Action<TParent, List<TChild>> listSet )
 		{
-			TableJoins.Add( new TableJoinMap
+			this.TableJoins.Add( new TableJoinMap()
 			{
 				ChildType = typeof( TChild ),
 				ParentType = typeof( TParent ),
-				CanJoin = canJoin,
-				ListSet = listSet
+				CanJoin = (object)canJoin,
+				ListSet = (object)listSet
 			} );
 		}
 
 		void IMapping.Join<TParent, TChild>( Action<TParent, List<TChild>> listSet )
 		{
-			Joins.Add( new KeyValuePair<Type, Type>( typeof( TParent ), typeof( TChild ) ), listSet );
+			this.Joins.Add( new KeyValuePair<Type, Type>( typeof( TParent ), typeof( TChild ) ), (object)listSet );
 		}
 
 		void IMapping.AddJoin( Func<ITableJoin, ITableJoinMap> func )
 		{
-			var tableJoinMap = func( new TableJoin() );
-			if ( tableJoinMap is DictionaryTableJoin )
-			{
-				var dictionaryTableJoin = tableJoinMap as DictionaryTableJoin;
-				DictionaryTableJoins.Add( dictionaryTableJoin );
-				TableMaps.Add( dictionaryTableJoin.ChildTable, typeof( ExpandoObject ) );
-			}
+			ITableJoinMap tableJoinMap = func( (ITableJoin)new TableJoin() );
+			if ( !( tableJoinMap is DictionaryTableJoin ) )
+				return;
+			DictionaryTableJoin dictionaryTableJoin = tableJoinMap as DictionaryTableJoin;
+			this.DictionaryTableJoins.Add( dictionaryTableJoin );
+			this.TableMaps.Add( dictionaryTableJoin.ChildTable, typeof( ExpandoObject ) );
 		}
 
 		void IMapping.VariableTableType<T>( Func<IDataRecord, Type> action )
 		{
-			VariableTableTypes.Add( typeof( T ), action );
-		}
-	}
-
-	internal class TableJoinMap
-	{
-		public Type ParentType { get; set; }
-		public Type ChildType { get; set; }
-		public object CanJoin { get; set; }
-		public object ListSet { get; set; }
-	}
-
-	internal class TableJoin : ITableJoin
-	{
-		public IDictionaryJoinCondition<T> DictionaryTableJoin<T>() where T : new()
-		{
-			return new DictionaryTableJoin<T>();
+			this.VariableTableTypes.Add( typeof( T ), (object)action );
 		}
 	}
 }

@@ -1,34 +1,29 @@
-﻿using System;
+﻿using SqlObjectHydrator.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Dynamic;
 using System.Linq;
-using SqlObjectHydrator.Configuration;
 
 namespace SqlObjectHydrator.ClassMapping
 {
 	internal static class ClassMapGenerator
 	{
-		public static ClassMapResult Generate<T>( IDataReader dataReader, Type configurationType = null ) where T : new()
+		public static ClassMapResult Generate<T>(
+		  IDataReader dataReader,
+		  Type configurationType = null )
+		  where T : new()
 		{
-			var mappings = new Mapping();
-			if ( configurationType != null )
+			Mapping mapping = new Mapping();
+			if ( configurationType != (Type)null )
+				( (IObjectHydratorConfiguration)Activator.CreateInstance( configurationType ) ).Mapping( (IMapping)mapping );
+			ClassMapResult classMapResult = new ClassMapResult()
 			{
-				var configuration = (IObjectHydratorConfiguration)Activator.CreateInstance( configurationType );
-				configuration.Mapping( mappings );
-			}
-
-			var classMapResult = new ClassMapResult
-			{
-				Mappings = mappings
+				Mappings = mapping
 			};
-
-			var baseType = ( typeof( T ).IsGenericType && typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) ) ? typeof( T ).GetGenericArguments()[ 0 ] : typeof( T );
-			if ( !mappings.TableMaps.ContainsValue( baseType ) )
-				mappings.TableMaps.Add( 0, baseType );
-
-			mappings.TableMaps = mappings.TableMaps.OrderBy( x => x.Key ).ToDictionary( x => x.Key, x => x.Value );
-
+			Type type = !typeof( T ).IsGenericType || !( typeof( T ).GetGenericTypeDefinition() == typeof( List<> ) ) ? typeof( T ) : typeof( T ).GetGenericArguments()[ 0 ];
+			if ( !mapping.TableMaps.ContainsValue( type ) )
+				mapping.TableMaps.Add( 0, type );
+			mapping.TableMaps = mapping.TableMaps.OrderBy<KeyValuePair<int, Type>, int>( (Func<KeyValuePair<int, Type>, int>)( x => x.Key ) ).ToDictionary<KeyValuePair<int, Type>, int, Type>( (Func<KeyValuePair<int, Type>, int>)( x => x.Key ), (Func<KeyValuePair<int, Type>, Type>)( x => x.Value ) );
 			return classMapResult;
 		}
 	}

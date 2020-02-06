@@ -1,4 +1,6 @@
-namespace SqlObjectHydrator.Configuration
+﻿namespace SqlObjectHydrator.Configuration
 {
-	public interface ITableJoinMap {}
+	public interface ITableJoinMap
+	{
+	}
 }

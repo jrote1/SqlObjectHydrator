@@ -7,9 +7,12 @@ namespace SqlObjectHydrator.Configuration.ExpressionGenerators
 {
 	internal static class DynamicToDictionaryGenerator
 	{
-		public static Action<TParent, List<ExpandoObject>> Generate<TParent, TKey, TValue>( Action<TParent, Dictionary<TKey, TValue>> setAction, string keyColumn, string valueColumn )
+		public static Action<TParent, List<ExpandoObject>> Generate<TParent, TKey, TValue>(
+		  Action<TParent, Dictionary<TKey, TValue>> setAction,
+		  string keyColumn,
+		  string valueColumn )
 		{
-			return ( parent, list ) => setAction( parent, list.ToDictionary( x => (TKey)x.First( y => y.Key == keyColumn ).Value, x => (TValue)x.First( y => y.Key == valueColumn ).Value ) );
-		} 
+			return (Action<TParent, List<ExpandoObject>>)( ( parent, list ) => setAction( parent, list.ToDictionary<ExpandoObject, TKey, TValue>( (Func<ExpandoObject, TKey>)( x => (TKey)x.First<KeyValuePair<string, object>>( (Func<KeyValuePair<string, object>, bool>)( y => y.Key == keyColumn ) ).Value ), (Func<ExpandoObject, TValue>)( x => (TValue)x.First<KeyValuePair<string, object>>( (Func<KeyValuePair<string, object>, bool>)( y => y.Key == valueColumn ) ).Value ) ) ) );
+		}
 	}
 }

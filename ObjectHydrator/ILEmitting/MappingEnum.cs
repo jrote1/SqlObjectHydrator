@@ -1,4 +1,4 @@
-namespace SqlObjectHydrator.ILEmitting
+﻿namespace SqlObjectHydrator.ILEmitting
 {
 	internal enum MappingEnum
 	{
@@ -6,6 +6,6 @@ namespace SqlObjectHydrator.ILEmitting
 		Join,
 		DictionaryJoin,
 		PropertyMap,
-		VariableTableType
+		VariableTableType,
 	}
 }

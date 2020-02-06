@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace SqlObjectHydrator.ClassMapping
 {
@@ -7,25 +7,27 @@ namespace SqlObjectHydrator.ClassMapping
 		public PropertyMapType PropertyMapType { get; set; }
 
 		public object SetAction { get; set; }
+
 		public int ColumnId { get; set; }
+
 		public string ColumnName { get; set; }
 
 		public PropertyMap( Delegate setAction )
 		{
-			SetAction = setAction;
-			PropertyMapType = PropertyMapType.Func;
+			this.SetAction = (object)setAction;
+			this.PropertyMapType = PropertyMapType.Func;
 		}
 
 		public PropertyMap( int columnId )
 		{
-			ColumnId = columnId;
-			PropertyMapType = PropertyMapType.ColumnId;
+			this.ColumnId = columnId;
+			this.PropertyMapType = PropertyMapType.ColumnId;
 		}
 
 		public PropertyMap( string columnName )
 		{
-			ColumnName = columnName;
-			PropertyMapType = PropertyMapType.ColumnName;
+			this.ColumnName = columnName;
+			this.PropertyMapType = PropertyMapType.ColumnName;
 		}
 	}
 }

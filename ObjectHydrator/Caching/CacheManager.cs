@@ -7,48 +7,43 @@ namespace SqlObjectHydrator.Caching
 {
 	internal static class CacheManager
 	{
-		internal static readonly Dictionary<int, object> MappingCaches;
+		internal static readonly Dictionary<int, object> MappingCaches = new Dictionary<int, object>();
 
-		static CacheManager()
+		public static void StoreMappingCache<T>(
+		  Func<MappingCache<T>> mappingCache,
+		  IDataReader dataReader,
+		  Type configurationType )
 		{
-			MappingCaches = new Dictionary<int, object>();
-		}
-
-		public static void StoreMappingCache<T>( Func<MappingCache<T>> mappingCache, IDataReader dataReader, Type configurationType )
-		{
-			var cacheHashCode = GetCacheHashCode<T>( dataReader, configurationType );
-			MappingCaches.Add( cacheHashCode, mappingCache() );
+			int cacheHashCode = CacheManager.GetCacheHashCode<T>( dataReader, configurationType );
+			CacheManager.MappingCaches.Add( cacheHashCode, (object)mappingCache() );
 		}
 
 		public static int GetCacheHashCode<T>( IDataReader dataReader, Type configurationType )
 		{
-			var result = typeof( T ).GetHashCode() + GetReaderHashCode( dataReader );
-			if ( configurationType != null )
-			{
-				result += configurationType.GetHashCode();
-			}
-			return result;
+			int num = typeof( T ).GetHashCode() + CacheManager.GetReaderHashCode( dataReader );
+			if ( configurationType != (Type)null )
+				num += configurationType.GetHashCode();
+			return num;
 		}
 
 		public static bool ContainsMappingCache<T>( IDataReader dataReader, Type configurationType )
 		{
-			return MappingCaches.ContainsKey( GetCacheHashCode<T>( dataReader, configurationType ) );
+			return CacheManager.MappingCaches.ContainsKey( CacheManager.GetCacheHashCode<T>( dataReader, configurationType ) );
 		}
 
-		public static MappingCache<T> GetMappingCache<T>( IDataReader dataReader, Type configurationType )
+		public static MappingCache<T> GetMappingCache<T>(
+		  IDataReader dataReader,
+		  Type configurationType )
 		{
-			return (MappingCache<T>)MappingCaches.FirstOrDefault( x => x.Key == GetCacheHashCode<T>( dataReader, configurationType ) ).Value;
+			return (MappingCache<T>)CacheManager.MappingCaches.FirstOrDefault<KeyValuePair<int, object>>( (Func<KeyValuePair<int, object>, bool>)( x => x.Key == CacheManager.GetCacheHashCode<T>( dataReader, configurationType ) ) ).Value;
 		}
 
 		public static int GetReaderHashCode( IDataReader dataReader )
 		{
-			var hashcode = 0;
-			for ( var i = 0; i < dataReader.FieldCount; i++ )
-			{
-				hashcode += dataReader.GetFieldType( i ).GetHashCode();
-				hashcode += dataReader.GetName( i ).GetHashCode();
-			}
-			return hashcode;
+			int num = 0;
+			for ( int i = 0; i < dataReader.FieldCount; ++i )
+				num = num + dataReader.GetFieldType( i ).GetHashCode() + dataReader.GetName( i ).GetHashCode();
+			return num;
 		}
 	}
 }
